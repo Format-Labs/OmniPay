@@ -2,6 +2,8 @@
 
 pragma solidity ~0.8.0;
 
+import "./Interfaces/IStargateReceiver.sol";
+
 contract Settler {
     // This contract allows a user to create an account that can receive tokens
     // It should produce a unique address for each account

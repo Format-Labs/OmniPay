@@ -9,6 +9,8 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 
+import "./Interfaces/IStargateRouter.sol";
+
 contract Receiver {
     using SafeERC20 for IERC20;
     using Address for address;

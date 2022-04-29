@@ -56,4 +56,8 @@ describe("Receiver", function () {
     console.log(`Balances: ${balances}`);
     console.log(`Balances2: ${balances2}`);
   });
+
+  describe("Test Uniswap", async () => {
+    it("Should perform swaps on Uniswap", async () => {});
+  });
 });
