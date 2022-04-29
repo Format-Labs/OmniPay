@@ -1,17 +1,23 @@
 const { expect } = require("chai");
 
 describe("Receiver", function () {
-  it("Should accept Token deposits", async function () {
+  let token, token2, receiver;
+
+  beforeEach(async () => {
     const supply = ethers.utils.parseEther("1000000");
     const Token = await ethers.getContractFactory("Token");
-    const token = await Token.deploy(supply);
+    token = await Token.deploy(supply);
 
     const Token2 = await ethers.getContractFactory("Token2");
-    const token2 = await Token2.deploy(supply);
+    token2 = await Token2.deploy(supply);
 
     const Receiver = await ethers.getContractFactory("Receiver");
-    const receiver = await Receiver.deploy();
+    receiver = await Receiver.deploy(
+      "0xE592427A0AEce92De3Edee1F18E0157C05861564"
+    );
+  });
 
+  it("Should accept Token deposits", async function () {
     await token.approve(receiver.address, 10000);
     await receiver.deposit(
       "0x6b6576696e000000000000000000000000000000000000000000000000000000",

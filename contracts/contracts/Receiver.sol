@@ -6,15 +6,18 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
-import "./Uniswap.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 
 contract Receiver {
     using SafeERC20 for IERC20;
     using Address for address;
 
-    address private constant UNISWAP_V2_ROUTER =
-        0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    address public USDC;
+    ISwapRouter public immutable swapRouter;
+
+    constructor(ISwapRouter _swapRouter) {
+        swapRouter = _swapRouter;
+    }
 
     struct Deposit {
         bytes32 id;
@@ -52,41 +55,81 @@ contract Receiver {
         return IERC20(_token).balanceOf(address(this));
     }
 
-    // Performing Batch Swap of tokens deposited via Uniswap.
+    /// @notice Internal function to perform swaps on the UniswapV3 router.
+    /// @param amountIn The amount of tokens to swap in.
+    /// @param _tokenIn The token to be swapped in.
+    /// @param _tokenOut The token to be swapped out.
+    /// @param poolFee The fee to be paid to the pool.
+    /// @param amountOutMin The minimum amount of tokens to be swapped out.
+    /// @return amountOut The amount of _tokenOut to be swapped out.
 
     function swap(
+        uint256 amountIn,
         address _tokenIn,
         address _tokenOut,
-        uint256 _amountIn,
-        uint256 _amountMinOut,
-        address _to
-    ) internal {
-        IERC20(_tokenIn).transferFrom(msg.sender, address(this), _amountIn);
-        IERC20(_tokenIn).approve(UNISWAP_V2_ROUTER, _amountIn);
-
-        address[] memory path;
-        path = new address[](3);
-        path[0] = _tokenIn;
-        path[1] = USDC;
-        path[2] = _tokenOut;
-
-        IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
-            _amountIn,
-            _amountMinOut,
-            path,
-            _to,
-            block.timestamp
+        uint24 poolFee,
+        uint256 amountOutMin
+    ) internal returns (uint256 amountOut) {
+        // Caller must approve the contract to spend the tokens.
+        // Transfer specified amount of _tokenIn to the contract.
+        TransferHelper.safeTransferFrom(
+            _tokenIn,
+            msg.sender,
+            address(this),
+            amountIn
         );
+
+        // Approve the router to spend the tokens.
+        TransferHelper.safeApprove(_tokenIn, address(swapRouter), amountIn);
+
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+            .ExactInputSingleParams({
+                tokenIn: _tokenIn,
+                tokenOut: _tokenOut,
+                fee: poolFee,
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: amountIn,
+                amountOutMinimum: amountOutMin,
+                sqrtPriceLimitX96: 0
+            });
+
+        // The call to `exactInputSingle` executes the swap.
+        amountOut = swapRouter.exactInputSingle(params);
     }
 
-    // A function that receives an array of token ardresses and the amount of each token and performs swaps for every token.
-    function batchSwap(
-        address[] memory _tokens,
-        uint256[] memory _amounts,
-        address _to
-    ) internal {
-        for (uint256 i = 0; i < _tokens.length; i++) {
-            swap(_tokens[i], USDC, _amounts[i], 0, _to);
+    // This function performs several swaps using the swap function above.
+    // It swaps various types of tokens which are passed via a struct of type `Swap`.
+
+    /// @notice A function to perform batch swaps.
+    /// @dev This function is used to perform batch swaps using the swap function.
+    /// @param _swaps A struct of type `Swap` which contains the information for the swaps to be performed.
+    /// @return The amount of tokens swapped out.
+
+    struct Swap {
+        address tokenIn;
+        address tokenOut;
+        uint256 amountIn;
+        uint256 amountOutMin;
+        uint24 poolFee;
+    }
+
+    function batchSwap(Swap[] memory _swaps)
+        public
+        returns (uint256 amountOut)
+    {
+        amountOut = 0;
+
+        for (uint256 i = 0; i < _swaps.length; i++) {
+            amountOut += swap(
+                _swaps[i].amountIn,
+                _swaps[i].tokenIn,
+                _swaps[i].tokenOut,
+                _swaps[i].poolFee,
+                _swaps[i].amountOutMin
+            );
         }
+
+        return amountOut;
     }
 }
