@@ -8,6 +8,7 @@ contract Settler {
     // This contract allows a user to create an account that can receive tokens
     // It should produce a unique address for each account
 
+    /*************VARIABLES *****************/
     struct Accout {
         address owner;
         uint256 balance;
@@ -15,7 +16,18 @@ contract Settler {
 
     mapping(address => Accout) public accounts;
 
-    // This function allows a user to create an account
+    /************* EVENTS *****************/
+    event sgReceived(
+        uint16 indexed _from,
+        bytes _srcAddress,
+        uint256 indexed _nonce,
+        address indexed _token,
+        uint256 _amount,
+        bytes _payload
+    );
+
+    /// @notice Creates a new account
+    /// @param _owner The owner of the account
     function createAccount(address _owner) public returns (bytes32 _accountId) {
         require(_owner != address(0), "Address can't be NULL");
         require(accounts[_owner].owner != _owner, "Account already exists");
@@ -24,18 +36,47 @@ contract Settler {
         return keccak256(abi.encodePacked(_owner));
     }
 
-    // This function allows a user to deposit tokens into their account
-    function deposit(address _owner, uint256 _amount) public {
-        accounts[_owner].balance += _amount;
-    }
-
-    // This function allows a user to withdraw tokens from their account
-    function withdraw(address _owner, uint256 _amount) public {
-        accounts[_owner].balance -= _amount;
-    }
-
-    // This function allows a user to check the balance of their account
+    /// @notice gets balance from an account
+    /// @param _owner The owner of the account
     function getBalance(address _owner) public view returns (uint256) {
         return accounts[_owner].balance;
+    }
+
+    /// @notice recives tokens from a stargate
+    function sgReceive(
+        uint16 _srcChainId, // the remote chainId sending the tokens
+        bytes memory _srcAddress, // the remote Bridge address
+        uint256 _nonce,
+        address _token, // the token contract on the local chain
+        uint256 amountLD, // the qty of local _token contract tokens
+        bytes memory payload
+    ) external {
+        emit sgReceived(
+            _srcChainId,
+            _srcAddress,
+            _nonce,
+            _token,
+            amountLD,
+            payload
+        );
+    }
+
+    struct UpdataData {
+        uint256 amount;
+        address owners;
+    }
+
+    /// @notice Updates the balance of an account
+    /// @dev It recives data from an external API to updata each data.
+    /// @param _data  The data to update the balance
+    function UpdateBalance(UpdataData[] memory _data) external {
+        for (uint256 i = 0; i < _data.length; i++) {
+            accounts[_data[i].owners].balance = _data[i].amount;
+        }
+    }
+
+    function withdraw(address _owner, uint256 _amount) public {
+        require(accounts[_owner].balance >= _amount, "Not enough balance");
+        accounts[_owner].balance -= _amount;
     }
 }

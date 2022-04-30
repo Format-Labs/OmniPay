@@ -9,16 +9,20 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 
-import "./Interfaces/IStargateRouter.sol";
+import {IStargateRouter} from "./Interfaces/IStargateRouter.sol";
 
 contract Receiver {
     using SafeERC20 for IERC20;
     using Address for address;
 
     ISwapRouter public immutable swapRouter;
+    IStargateRouter public immutable stargateRouter;
 
-    constructor(ISwapRouter _swapRouter) {
+    uint8 public constant TYPE_SWAP_REMOTE = 1;
+
+    constructor(ISwapRouter _swapRouter, IStargateRouter _stargateRouter) {
         swapRouter = _swapRouter;
+        stargateRouter = _stargateRouter;
     }
 
     struct Deposit {
@@ -65,7 +69,7 @@ contract Receiver {
     /// @param amountOutMin The minimum amount of tokens to be swapped out.
     /// @return amountOut The amount of _tokenOut to be swapped out.
 
-    function swap(
+    function AssetSwap(
         uint256 amountIn,
         address _tokenIn,
         address _tokenOut,
@@ -108,7 +112,7 @@ contract Receiver {
     /// @param _swaps A struct of type `Swap` which contains the information for the swaps to be performed.
     /// @return The amount of tokens swapped out.
 
-    struct Swap {
+    struct SwapIn {
         address tokenIn;
         address tokenOut;
         uint256 amountIn;
@@ -116,14 +120,14 @@ contract Receiver {
         uint24 poolFee;
     }
 
-    function batchSwap(Swap[] memory _swaps)
+    function batchAssetSwap(SwapIn[] memory _swaps)
         public
         returns (uint256 amountOut)
     {
         amountOut = 0;
 
         for (uint256 i = 0; i < _swaps.length; i++) {
-            amountOut += swap(
+            amountOut += AssetSwap(
                 _swaps[i].amountIn,
                 _swaps[i].tokenIn,
                 _swaps[i].tokenOut,
@@ -133,5 +137,63 @@ contract Receiver {
         }
 
         return amountOut;
+    }
+
+    /**********************************************/
+    /********** Bridging the Funds ****************/
+    /**********************************************/
+
+    /*********************************************/
+    /*********** IStargateRouter *****************/
+    /*********************************************/
+
+    ///@notice get the swap fee.
+    ///@dev This is a private function that returns the swap fee.
+    /// @param _dstChainId The destination chain id.
+    /// @param _toAddress The address of the destination contract.
+    /// @param _transferAndCallPayload The payload for the transfer and call function.
+    function getSwapFee(
+        uint16 _dstChainId,
+        bytes memory _toAddress,
+        bytes memory _transferAndCallPayload
+    ) public view returns (uint256) {
+        (uint256 fee, ) = IStargateRouter(stargateRouter).quoteLayerZeroFee(
+            _dstChainId,
+            TYPE_SWAP_REMOTE,
+            _toAddress,
+            _transferAndCallPayload,
+            IStargateRouter.lzTxObj(0, 0, "0x")
+        );
+        return fee;
+    }
+
+    // the msg.value is the "fee" that Stargate needs to pay for the cross chain message
+    function swap(
+        uint16 _chainId,
+        uint16 sPoolId,
+        uint16 dPoolId,
+        uint256 qty,
+        uint256 amountOutMin,
+        address dstAddr
+    ) public payable {
+        require(
+            msg.value >=
+                getSwapFee(
+                    _chainId,
+                    abi.encodePacked(address(this)),
+                    abi.encodePacked(address(this))
+                )
+        );
+        IStargateRouter(stargateRouter).swap{value: msg.value}(
+            10006, // send to Fuji (use LayerZero chainId)
+            sPoolId, // source pool id
+            dPoolId, // dest pool id
+            payable(msg.sender), // refund adddress. extra gas (if any) is returned to this address
+            qty, // quantity to swap
+            amountOutMin, // the min qty you would accept on the destination
+            IStargateRouter.lzTxObj(0, 0, "0x"), // 0 additional gasLimit increase, 0 airdrop, at 0x address
+            abi.encodePacked(dstAddr), // the address to send the tokens to on the destination
+            bytes("") // bytes param, if you wish to send additional payload you can abi.encode() them here
+        );
     }
 }
