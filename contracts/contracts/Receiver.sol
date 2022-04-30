@@ -4,39 +4,49 @@ pragma solidity ~0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 import "@openzeppelin/contracts/utils/Address.sol";
 
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 
 import {IStargateRouter} from "./Interfaces/IStargateRouter.sol";
+import {IConnext} from "./Interfaces/IConnext.sol";
 
 contract Receiver {
     using SafeERC20 for IERC20;
     using Address for address;
 
+    /********************** VARIABLES ****************/
     ISwapRouter public immutable swapRouter;
     IStargateRouter public immutable stargateRouter;
+    IConnext public immutable connext;
 
     uint8 public constant TYPE_SWAP_REMOTE = 1;
-
-    constructor(ISwapRouter _swapRouter, IStargateRouter _stargateRouter) {
-        swapRouter = _swapRouter;
-        stargateRouter = _stargateRouter;
-    }
 
     struct Deposit {
         bytes32 id;
         uint256 amount;
     }
 
-    //A mapping to store all the types of tokens deposited into the contract
-
     mapping(bytes32 => Deposit) public deposits;
 
+    /********************** EVENTS *******************/
+
+    event TransferInitiated(address asset, address from, address to);
     event Deposited(bytes32 indexed id, uint256 amount);
 
-    // A function that accepts ERC20 tokens and deposits them to the Receiver contract.
+    constructor(
+        ISwapRouter _swapRouter,
+        IStargateRouter _stargateRouter,
+        IConnext _connext
+    ) {
+        swapRouter = _swapRouter;
+        stargateRouter = _stargateRouter;
+        connext = _connext;
+    }
+
     function deposit(
         bytes32 _id,
         IERC20 token,
@@ -51,12 +61,10 @@ contract Receiver {
         emit Deposited(_id, _amount);
     }
 
-    // A function that returns the deposits of a specific id.
     function getDeposits(bytes32 _id) public view returns (Deposit memory) {
         return deposits[_id];
     }
 
-    // Get balance of tokens in the Receiver contract.
     function getBalance(address _token) public view returns (uint256) {
         return IERC20(_token).balanceOf(address(this));
     }
@@ -69,7 +77,7 @@ contract Receiver {
     /// @param amountOutMin The minimum amount of tokens to be swapped out.
     /// @return amountOut The amount of _tokenOut to be swapped out.
 
-    function AssetSwap(
+    function swap(
         uint256 amountIn,
         address _tokenIn,
         address _tokenOut,
@@ -112,7 +120,7 @@ contract Receiver {
     /// @param _swaps A struct of type `Swap` which contains the information for the swaps to be performed.
     /// @return The amount of tokens swapped out.
 
-    struct SwapIn {
+    struct Swap {
         address tokenIn;
         address tokenOut;
         uint256 amountIn;
@@ -120,14 +128,14 @@ contract Receiver {
         uint24 poolFee;
     }
 
-    function batchAssetSwap(SwapIn[] memory _swaps)
+    function batchSwap(Swap[] memory _swaps)
         public
         returns (uint256 amountOut)
     {
         amountOut = 0;
 
         for (uint256 i = 0; i < _swaps.length; i++) {
-            amountOut += AssetSwap(
+            amountOut += swap(
                 _swaps[i].amountIn,
                 _swaps[i].tokenIn,
                 _swaps[i].tokenOut,
@@ -168,7 +176,7 @@ contract Receiver {
     }
 
     // the msg.value is the "fee" that Stargate needs to pay for the cross chain message
-    function swap(
+    function stargateSend(
         uint16 _chainId,
         uint16 sPoolId,
         uint16 dPoolId,
@@ -195,5 +203,47 @@ contract Receiver {
             abi.encodePacked(dstAddr), // the address to send the tokens to on the destination
             bytes("") // bytes param, if you wish to send additional payload you can abi.encode() them here
         );
+    }
+
+    /*********************************************/
+    /**************** Connext ********************/
+    /*********************************************/
+
+    function connextSend(
+        address to,
+        address asset,
+        uint32 originDomain,
+        uint32 destinationDomain,
+        uint256 amount
+    ) external payable {
+        ERC20 token = ERC20(asset);
+        token.transferFrom(msg.sender, address(this), amount);
+        token.approve(address(connext), amount);
+
+        bytes4 selector = bytes4(keccak256("deposit(address,uint256,address)"));
+
+        bytes memory callData = abi.encodeWithSelector(
+            selector,
+            asset,
+            amount,
+            msg.sender
+        );
+
+        IConnext.CallParams memory callParams = IConnext.CallParams({
+            to: to,
+            callData: callData,
+            originDomain: originDomain,
+            destinationDomain: destinationDomain
+        });
+
+        IConnext.XCallArgs memory xcallArgs = IConnext.XCallArgs({
+            params: callParams,
+            transactingAssetId: asset,
+            amount: amount
+        });
+
+        connext.xcall(xcallArgs);
+
+        emit TransferInitiated(asset, msg.sender, to);
     }
 }

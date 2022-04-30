@@ -3,6 +3,7 @@
 pragma solidity ~0.8.0;
 
 import "./Interfaces/IStargateReceiver.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract Settler {
     // This contract allows a user to create an account that can receive tokens
@@ -59,6 +60,20 @@ contract Settler {
             amountLD,
             payload
         );
+    }
+
+    /// @notice Receives tokens from Connext
+
+    function deposit(
+        address asset,
+        uint256 amount,
+        address onBehalfOf
+    ) public payable returns (uint256) {
+        ERC20 token = ERC20(asset);
+        balances[asset][onBehalfOf] += amount;
+        token.transferFrom(msg.sender, address(this), amount);
+
+        return balances[asset][onBehalfOf];
     }
 
     struct UpdataData {
