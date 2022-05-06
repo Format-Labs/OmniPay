@@ -25,9 +25,15 @@ contract Receiver {
 
     uint8 public constant TYPE_SWAP_REMOTE = 1;
 
+    address private constant USDC =
+        address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+    uint24 public poolFee = 0;
+
     struct Deposit {
         bytes32 id;
         uint256 amount;
+        uint256 amountUSD;
+        bool risk;
     }
 
     mapping(bytes32 => Deposit) public deposits;
@@ -50,15 +56,22 @@ contract Receiver {
     function deposit(
         bytes32 _id,
         IERC20 token,
-        uint256 _amount
+        uint256 _amount,
+        uint256 _amountUSD,
+        bool risk
     ) public {
         // token.safeTransferFrom(token, address(this), _amount);
         // Transfer the amount of tokens to the Receiver contract.
         token.safeTransferFrom(msg.sender, address(this), _amount);
 
-        deposits[_id] = Deposit(_id, _amount);
+        deposits[_id] = Deposit(_id, _amount, _amountUSD, risk);
 
-        emit Deposited(_id, _amount);
+        emit Deposited(_id, _amountUSD);
+
+        if (risk) {
+            // Initiate a single swap.
+            swap(_amount, address(token), USDC, poolFee, _amountUSD);
+        }
     }
 
     function getDeposits(bytes32 _id) public view returns (Deposit memory) {
@@ -73,7 +86,7 @@ contract Receiver {
     /// @param amountIn The amount of tokens to swap in.
     /// @param _tokenIn The token to be swapped in.
     /// @param _tokenOut The token to be swapped out.
-    /// @param poolFee The fee to be paid to the pool.
+    /// @param _poolFee The fee to be paid to the pool.
     /// @param amountOutMin The minimum amount of tokens to be swapped out.
     /// @return amountOut The amount of _tokenOut to be swapped out.
 
@@ -81,7 +94,7 @@ contract Receiver {
         uint256 amountIn,
         address _tokenIn,
         address _tokenOut,
-        uint24 poolFee,
+        uint24 _poolFee,
         uint256 amountOutMin
     ) internal returns (uint256 amountOut) {
         // Caller must approve the contract to spend the tokens.
@@ -100,7 +113,7 @@ contract Receiver {
             .ExactInputSingleParams({
                 tokenIn: _tokenIn,
                 tokenOut: _tokenOut,
-                fee: poolFee,
+                fee: _poolFee,
                 recipient: msg.sender,
                 deadline: block.timestamp,
                 amountIn: amountIn,
@@ -180,9 +193,10 @@ contract Receiver {
         uint16 _chainId,
         uint16 sPoolId,
         uint16 dPoolId,
-        uint256 qty,
+        uint256 _amount,
         uint256 amountOutMin,
-        address dstAddr
+        address dstAddr,
+        IERC20 token
     ) public payable {
         require(
             msg.value >=
@@ -192,16 +206,18 @@ contract Receiver {
                     abi.encodePacked(address(this))
                 )
         );
+
+        IERC20(token).approve(address(swapRouter), _amount);
         IStargateRouter(stargateRouter).swap{value: msg.value}(
-            10006, // send to Fuji (use LayerZero chainId)
+            _chainId, //  LayerZero chainId
             sPoolId, // source pool id
             dPoolId, // dest pool id
             payable(msg.sender), // refund adddress. extra gas (if any) is returned to this address
-            qty, // quantity to swap
+            _amount, // quantity to swap
             amountOutMin, // the min qty you would accept on the destination
             IStargateRouter.lzTxObj(0, 0, "0x"), // 0 additional gasLimit increase, 0 airdrop, at 0x address
             abi.encodePacked(dstAddr), // the address to send the tokens to on the destination
-            bytes("") // bytes param, if you wish to send additional payload you can abi.encode() them here
+            bytes("") // bytes param; payload to send to the destination
         );
     }
 

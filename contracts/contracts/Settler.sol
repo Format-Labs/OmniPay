@@ -4,8 +4,9 @@ pragma solidity ~0.8.0;
 
 import "./Interfaces/IStargateReceiver.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Settler {
+contract Settler is Ownable {
     // This contract allows a user to create an account that can receive tokens
     // It should produce a unique address for each account
 
@@ -17,6 +18,14 @@ contract Settler {
 
     mapping(address => Accout) public accounts;
 
+    struct UpdataData {
+        uint256 amount;
+        address owners;
+    }
+
+    // Mapping for delegation of an address
+    mapping(address => bool) public delegated;
+
     /************* EVENTS *****************/
     event sgReceived(
         uint16 indexed _from,
@@ -27,6 +36,10 @@ contract Settler {
         bytes _payload
     );
 
+    event Withdraw(address indexed _from, uint256 _amount);
+
+    event UpdatedData(address _from, uint256 _amount);
+
     /// @notice Creates a new account
     /// @param _owner The owner of the account
     function createAccount(address _owner) public returns (bytes32 _accountId) {
@@ -35,6 +48,20 @@ contract Settler {
         accounts[_owner] = Accout(_owner, 0);
         // Abi.encodePacked of the address of the account
         return keccak256(abi.encodePacked(_owner));
+    }
+
+    ///@notice gives power to an address to update Data.
+    ///@param _sDelegate The address of the delegate
+    function Delegate(address _sDelegate) external onlyOwner {
+        require(_sDelegate != address(0), "Address can't be NULL");
+        require(delegated[_sDelegate] == false, "Address already delegated");
+        delegated[_sDelegate] = true;
+    }
+
+    // Modifier to check delegation
+    modifier onlyDelegated(address _sDelegate) {
+        require(delegated[_sDelegate] == true, "Address not delegated");
+        _;
     }
 
     /// @notice gets balance from an account
@@ -62,36 +89,25 @@ contract Settler {
         );
     }
 
-    /// @notice Receives tokens from Connext
-
-    function deposit(
-        address asset,
-        uint256 amount,
-        address onBehalfOf
-    ) public payable returns (uint256) {
-        ERC20 token = ERC20(asset);
-        balances[asset][onBehalfOf] += amount;
-        token.transferFrom(msg.sender, address(this), amount);
-
-        return balances[asset][onBehalfOf];
-    }
-
-    struct UpdataData {
-        uint256 amount;
-        address owners;
-    }
-
     /// @notice Updates the balance of an account
     /// @dev It recives data from an external API to updata each data.
     /// @param _data  The data to update the balance
-    function UpdateBalance(UpdataData[] memory _data) external {
+    function UpdateBalance(UpdataData[] memory _data)
+        external
+        onlyDelegated(msg.sender)
+    {
         for (uint256 i = 0; i < _data.length; i++) {
             accounts[_data[i].owners].balance = _data[i].amount;
+            emit UpdatedData(_data[i].owners, _data[i].amount);
         }
     }
 
     function withdraw(address _owner, uint256 _amount) public {
+        require(msg.sender == _owner, "Only the owner can withdraw");
         require(accounts[_owner].balance >= _amount, "Not enough balance");
         accounts[_owner].balance -= _amount;
+        emit Withdraw(_owner, _amount);
     }
+
+    receive() external payable {}
 }
