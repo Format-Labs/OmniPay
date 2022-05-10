@@ -1,62 +1,47 @@
-import BN from "bn.js";
-import { Contract as EthersContract } from "ethers";
+import axios from "axios";
+import { ethers } from "../utils/providers.js";
+import { web3 } from "../utils/providers.js";
+import { getAddressesBalances } from "eth-balance-checker/lib/ethers.js";
+import { getAddressesBalances as getWeb3Balances } from "eth-balance-checker/lib/web3.js";
 import { AddressBalanceMap } from "eth-balance-checker";
-import { LIBRARY } from "../utils/types";
-import { web3, ethers } from "../utils/providers";
+import getContractBalances from "./getContractBalances.js";
 
-const tokenAbi = [
-  {
-    constant: true,
-    inputs: [{ name: "_owner", type: "address" }],
-    name: "balanceOf",
-    outputs: [{ name: "balance", type: "uint256" }],
-    type: "function",
-  },
+// const ethers = Ethers.getDefaultProvider();
+const addresses = [
+  // Binance hot wallet
+  "0xfe9e8709d3215310075d67e3ed32a380ccf451c8",
+  // Bitfinex hot wallet
+  "0x742d35cc6634c0532925a3b844bc454e4438f44e",
+  // Bittrex hot wallet
+  "0xfbb1b73c4f0bda4f67dca266ce6ef42f520fbb98",
+  // Huobi hot wallet
+  "0xdc76cd25977e0a5ae17155770273ad58648900d3",
+  // Kraken hot wallet
+  "0xe853c56864a2ebe4576a807d26fdc4a0ada51919",
 ];
 
-async function getClassicBalances(
-  library: LIBRARY,
-  addresses: string[],
-  tokens: string[]
-): Promise<AddressBalanceMap> {
-  const promises: Array<Promise<BN>> = [];
+async function getTokens(): Promise<string[]> {
+  const response = await axios.get(
+    "https://tokens.coingecko.com/uniswap/all.json"
+  );
+  const data = await response.data.tokens.map((token: any) => token.address);
 
-  addresses.forEach((address) => {
-    tokens.forEach((tokenAddr) => {
-      if (library === LIBRARY.WEB3) {
-        if (tokenAddr === "0x0000000000000000000000000000000000000000") {
-          promises.push(web3.eth.getBalance(address) as any);
-        } else {
-          const contract: any = new web3.eth.Contract(tokenAbi, tokenAddr);
-          promises.push(
-            contract.methods
-              .balanceOf(address)
-              .call()
-              .catch(() => new BN(0))
-          );
-        }
-      } else {
-        if (tokenAddr === "0x0000000000000000000000000000000000000000") {
-          promises.push(ethers.getBalance(address) as any);
-        } else {
-          const contract: any = new EthersContract(tokenAddr, tokenAbi, ethers);
-          promises.push(contract.balanceOf(address).catch(() => new BN(0)));
-        }
-      }
-    });
-  });
-
-  return Promise.all(promises).then((responses) => {
-    const balances: AddressBalanceMap = {};
-    addresses.forEach((address, addressIdx) => {
-      balances[address] = {};
-      tokens.forEach((tokenAddr, tokenIdx) => {
-        const balance = responses[addressIdx * tokens.length + tokenIdx];
-        balances[address][tokenAddr] = balance.toString();
-      });
-    });
-    return balances;
-  });
+  return data;
 }
 
-export default getClassicBalances;
+async function getBalances(): Promise<AddressBalanceMap> {
+  const balances = await getAddressesBalances(
+    ethers,
+    addresses,
+    await getTokens()
+  );
+  return balances;
+}
+
+async function getW3Balances(): Promise<AddressBalanceMap> {
+  const balances = await getWeb3Balances(web3, addresses, await getTokens());
+  return balances;
+}
+await getContractBalances(addresses, await getTokens());
+await getW3Balances();
+await getBalances();
