@@ -102,6 +102,10 @@ contract Settler is Ownable {
         }
     }
 
+    /// @notice Withdraws tokens from an account
+    /// @param _owner The owner of the account
+    /// @param _amount The amount of tokens to withdraw
+
     function withdraw(address _owner, uint256 _amount) public {
         require(msg.sender == _owner, "Only the owner can withdraw");
         require(accounts[_owner].balance >= _amount, "Not enough balance");

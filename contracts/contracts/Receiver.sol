@@ -37,6 +37,11 @@ contract Receiver {
     }
 
     mapping(bytes32 => Deposit) public deposits;
+    mapping(bytes32 => bool) public inserted;
+    bytes32[] public depositIDs;
+
+    // a mapping of bytes32 to mapping of address to balances
+    // mapping(bytes32 => mapping(address => uint256)) public balances;
 
     /********************** EVENTS *******************/
 
@@ -53,6 +58,8 @@ contract Receiver {
         connext = _connext;
     }
 
+    //When a deposit is done the amount and id should be stored in a struct which is then stored in the deposits mapping
+
     function deposit(
         bytes32 _id,
         IERC20 token,
@@ -60,11 +67,17 @@ contract Receiver {
         uint256 _amountUSD,
         bool risk
     ) public {
-        // token.safeTransferFrom(token, address(this), _amount);
-        // Transfer the amount of tokens to the Receiver contract.
         token.safeTransferFrom(msg.sender, address(this), _amount);
 
+        // Update Deposits and balances
         deposits[_id] = Deposit(_id, _amount, _amountUSD, risk);
+        // balances[_id][msg.sender] = _amount;
+
+        // Add id to the array of ids only if it does not exist yet
+        if (!inserted[_id]) {
+            depositIDs.push(_id);
+            inserted[_id] = true;
+        }
 
         emit Deposited(_id, _amountUSD);
 
@@ -80,6 +93,15 @@ contract Receiver {
 
     function getBalance(address _token) public view returns (uint256) {
         return IERC20(_token).balanceOf(address(this));
+    }
+
+    // retrive all deposits and return an array containing deposits of each ID
+    function getAllDeposits() internal view returns (Deposit[] memory) {
+        Deposit[] memory result = new Deposit[](depositIDs.length);
+        for (uint i = 0; i < depositIDs.length; i++) {
+            result[i] = deposits[depositIDs[i]];
+        }
+        return result;
     }
 
     /// @notice Internal function to perform swaps on the UniswapV3 router.
@@ -147,7 +169,7 @@ contract Receiver {
     {
         amountOut = 0;
 
-        for (uint256 i = 0; i < _swaps.length; i++) {
+        for (uint256 i; i < _swaps.length; i++) {
             amountOut += swap(
                 _swaps[i].amountIn,
                 _swaps[i].tokenIn,
@@ -173,7 +195,7 @@ contract Receiver {
     /// @param _dstChainId The destination chain id.
     /// @param _toAddress The address of the destination contract.
     /// @param _transferAndCallPayload The payload for the transfer and call function.
-    function getSwapFee(
+    function _getStargateSwapFee(
         uint16 _dstChainId,
         bytes memory _toAddress,
         bytes memory _transferAndCallPayload
@@ -200,7 +222,7 @@ contract Receiver {
     ) public payable {
         require(
             msg.value >=
-                getSwapFee(
+                _getStargateSwapFee(
                     _chainId,
                     abi.encodePacked(address(this)),
                     abi.encodePacked(address(this))
@@ -262,4 +284,6 @@ contract Receiver {
 
         emit TransferInitiated(asset, msg.sender, to);
     }
+
+    receive() external payable {}
 }
