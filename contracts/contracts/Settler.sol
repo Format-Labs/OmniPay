@@ -6,6 +6,8 @@ import "./Interfaces/IStargateReceiver.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import "./lzApp/NonblockingLzApp.sol";
+
 contract Settler is Ownable {
     // This contract allows a user to create an account that can receive tokens
     // It should produce a unique address for each account
