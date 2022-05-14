@@ -34,7 +34,10 @@ contract LzSender is NonblockingLzApp {
         );
 
         // pay the fees
-        require(msg.value >= fee, "you need to pay the message fee");
+        require(
+            address(this).balance >= fee,
+            "load more gas to the contract bruh"
+        );
 
         // send the message
         lzEndpoint.send{value: fee}(

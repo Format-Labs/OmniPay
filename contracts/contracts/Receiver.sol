@@ -14,7 +14,7 @@ import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import {IStargateRouter} from "./Interfaces/IStargateRouter.sol";
 import {IConnext} from "./Interfaces/IConnext.sol";
 
-import "./lzApp/LzApp.sol";
+// import "./lzApp/LzApp.sol";
 
 contract Receiver {
     using SafeERC20 for IERC20;
