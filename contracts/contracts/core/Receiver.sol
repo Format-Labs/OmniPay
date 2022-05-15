@@ -4,6 +4,7 @@ pragma solidity ~0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -12,18 +13,17 @@ import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 
 import {IStargateRouter} from "../Interfaces/IStargateRouter.sol";
-import {IConnext} from "../Interfaces/IConnext.sol";
 
 import "../lzApp/NonblockingLzApp.sol";
 
-contract Receiver is NonblockingLzApp {
+contract Receiver is NonblockingLzApp, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using Address for address;
 
     /********************** VARIABLES ****************/
     ISwapRouter public immutable swapRouter;
     IStargateRouter public immutable stargateRouter;
-    IConnext public immutable connext;
+
     address public USDC;
     address public reserveAddress;
     uint16 public reserveChainId;
@@ -57,7 +57,7 @@ contract Receiver is NonblockingLzApp {
     /********************** EVENTS ****************/
     event Deposited(bytes indexed id, uint256 amount);
     event Received(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce);
-    event TransferInitiatedConnext(address asset, address from, address to);
+    event sgReceived(uint16 _srcChainId, bytes _srcAddress, uint256 amount);
     event TransferInitiatedStargate(
         address asset,
         address from,
@@ -68,13 +68,11 @@ contract Receiver is NonblockingLzApp {
     constructor(
         ISwapRouter _swapRouter,
         IStargateRouter _stargateRouter,
-        IConnext _connext,
         address _endpoint,
         address _USDC
     ) NonblockingLzApp(_endpoint) {
         swapRouter = _swapRouter;
         stargateRouter = _stargateRouter;
-        connext = _connext;
         USDC = _USDC;
     }
 
@@ -351,44 +349,6 @@ contract Receiver is NonblockingLzApp {
         );
     }
 
-    function connextSend(
-        address to,
-        address asset,
-        uint32 originDomain,
-        uint32 destinationDomain,
-        uint256 amount
-    ) external payable {
-        ERC20 token = ERC20(asset);
-        token.transferFrom(msg.sender, address(this), amount);
-        token.approve(address(connext), amount);
-
-        bytes4 selector = bytes4(keccak256("deposit(address,uint256,address)"));
-
-        bytes memory callData = abi.encodeWithSelector(
-            selector,
-            asset,
-            amount,
-            msg.sender
-        );
-
-        IConnext.CallParams memory callParams = IConnext.CallParams({
-            to: to,
-            callData: callData,
-            originDomain: originDomain,
-            destinationDomain: destinationDomain
-        });
-
-        IConnext.XCallArgs memory xcallArgs = IConnext.XCallArgs({
-            params: callParams,
-            transactingAssetId: asset,
-            amount: amount
-        });
-
-        connext.xcall(xcallArgs);
-
-        emit TransferInitiatedConnext(asset, msg.sender, to);
-    }
-
     /*********************************************/
     /***********    Withdraw    *****************/
     /*********************************************/
@@ -434,6 +394,25 @@ contract Receiver is NonblockingLzApp {
             address(0x0), // future parameter
             adapterParams // adapterParams (see "Advanced Features")
         );
+    }
+
+    /// @notice recives tokens from a stargate
+    /// @dev It  receives and sends the funds to the user.
+    function sgReceive(
+        uint16 _srcChainId,
+        bytes memory _srcAddress,
+        uint256, /* _nonce, */
+        address _token,
+        uint256 amountLD,
+        bytes memory payload
+    ) external nonReentrant {
+        emit sgReceived(_srcChainId, _srcAddress, amountLD);
+
+        (uint256 amount, address _to) = abi.decode(payload, (uint256, address));
+
+        // Transfer tokens to address _to
+        IERC20(_token).safeTransfer(_to, amount);
+        balances[_to] -= amount;
     }
 
     receive() external payable {}

@@ -231,7 +231,7 @@ contract Receiver {
                 )
         );
 
-        IERC20(token).approve(address(swapRouter), _amount);
+        IERC20(token).approve(address(stargateRouter), _amount);
         IStargateRouter(stargateRouter).swap{value: msg.value}(
             _chainId, //  LayerZero chainId
             sPoolId, // source pool id

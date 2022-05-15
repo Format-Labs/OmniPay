@@ -112,6 +112,7 @@ contract Settler is Ownable {
         require(msg.sender == _owner, "Only the owner can withdraw");
         require(accounts[_owner].balance >= _amount, "Not enough balance");
         accounts[_owner].balance -= _amount;
+
         emit Withdraw(_owner, _amount);
     }
 
