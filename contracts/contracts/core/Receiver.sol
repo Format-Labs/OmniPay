@@ -154,7 +154,10 @@ contract Receiver is NonblockingLzApp, ReentrancyGuard {
             adapterParams
         );
 
-        require(msg.value >= fee, "you need to pay the message fee");
+        require(
+            address(this).balance >= fee,
+            "you need to pay the message fee"
+        );
 
         lzEndpoint.send{value: fee}(
             _dstChainId, // destination LayerZero chainId

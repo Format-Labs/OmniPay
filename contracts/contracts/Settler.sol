@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ~0.8.0;
-
-import "./Interfaces/IStargateReceiver.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./Interfaces/IStargateReceiver.sol";
 
 import "./lzApp/NonblockingLzApp.sol";
 
-contract Settler is Ownable {
+contract Settler is Ownable, NonblockingLzApp, ReentrancyGuard {
     // This contract allows a user to create an account that can receive tokens
     // It should produce a unique address for each account
 
@@ -41,6 +42,8 @@ contract Settler is Ownable {
     event Withdraw(address indexed _from, uint256 _amount);
 
     event UpdatedData(address _from, uint256 _amount);
+
+    constructor(address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {}
 
     /// @notice Creates a new account
     /// @param _owner The owner of the account
@@ -91,6 +94,27 @@ contract Settler is Ownable {
         );
     }
 
+    /// @notice Receive from layerZero.
+    function _nonblockingLzReceive(
+        uint16, /*_srcChainId*/
+        bytes memory, /*_srcAddress*/
+        uint64, /*_nonce,*/
+        bytes memory _payload
+    ) internal override {
+        (uint256 amount, bytes memory to) = abi.decode(
+            _payload,
+            (uint256, bytes)
+        );
+
+        address accAddrr;
+        assembly {
+            accAddrr := mload(add(to, 20))
+        }
+
+        // Update Accounts.
+        accounts[accAddrr].balance += amount;
+    }
+
     /// @notice Updates the balance of an account
     /// @dev It recives data from an external API to updata each data.
     /// @param _data  The data to update the balance
@@ -108,7 +132,7 @@ contract Settler is Ownable {
     /// @param _owner The owner of the account
     /// @param _amount The amount of tokens to withdraw
 
-    function withdraw(address _owner, uint256 _amount) public {
+    function withdraw(address _owner, uint256 _amount) public nonReentrant {
         require(msg.sender == _owner, "Only the owner can withdraw");
         require(accounts[_owner].balance >= _amount, "Not enough balance");
         accounts[_owner].balance -= _amount;
