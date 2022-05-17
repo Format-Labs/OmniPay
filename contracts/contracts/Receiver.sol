@@ -1,23 +1,27 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ~0.8.0;
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "@openzeppelin/contracts/utils/Address.sol";
 
-import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
-
 import {IStargateRouter} from "./Interfaces/IStargateRouter.sol";
 
 import "./lzApp/NonblockingLzApp.sol";
 
-contract Receiver is NonblockingLzApp, ReentrancyGuard {
+contract Receiver is
+    NonblockingLzApp,
+    ReentrancyGuard,
+    KeeperCompatibleInterface
+{
     using SafeERC20 for IERC20;
     using Address for address;
 
@@ -303,6 +307,30 @@ contract Receiver is NonblockingLzApp, ReentrancyGuard {
             adapterParams // adapterParams (see "Advanced Features")
         );
     }
+
+    uint public immutable interval = 1800;
+    uint public lastTimeStamp = block.timestamp;
+
+    function checkUpkeep(
+        bytes calldata /* checkData */
+    )
+        external
+        view
+        override
+        returns (
+            bool upkeepNeeded,
+            bytes memory /* performData */
+        )
+    {
+        upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
+        // We don't use the checkData in this example. The checkData is defined when the Upkeep was registered.
+    }
+
+    uint public counter;
+
+    function performUpkeep(
+        bytes calldata /* performData */
+    ) external override {}
 
     receive() external payable {}
 }
