@@ -2,7 +2,10 @@
 
 pragma solidity ~0.8.0;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Interfaces/IStargateReceiver.sol";
@@ -10,10 +13,10 @@ import "./Interfaces/IStargateReceiver.sol";
 import "./lzApp/NonblockingLzApp.sol";
 
 contract Settler is Ownable, NonblockingLzApp, ReentrancyGuard {
-    // This contract allows a user to create an account that can receive tokens
-    // It should produce a unique address for each account
-
+    using SafeERC20 for IERC20;
     /*************VARIABLES *****************/
+
+    address public USDC;
     struct Accout {
         address owner;
         uint256 balance;
@@ -40,19 +43,31 @@ contract Settler is Ownable, NonblockingLzApp, ReentrancyGuard {
     );
 
     event Withdraw(address indexed _from, uint256 _amount);
+    event UpdatedData(address indexed _from, uint256 _amount);
+    event AccountCreated(address indexed _from, uint256 _amount);
+    event Delegated(address indexed _from);
 
-    event UpdatedData(address _from, uint256 _amount);
-
-    constructor(address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {}
+    constructor(address _lzEndpoint, address _USDC)
+        NonblockingLzApp(_lzEndpoint)
+    {
+        USDC = _USDC;
+    }
 
     /// @notice Creates a new account
-    /// @param _owner The owner of the account
-    function createAccount(address _owner) public returns (bytes32 _accountId) {
-        require(_owner != address(0), "Address can't be NULL");
-        require(accounts[_owner].owner != _owner, "Account already exists");
-        accounts[_owner] = Accout(_owner, 0);
+    /// @param _accAddress The owner of the account
+    function createAccount(address _accAddress)
+        public
+        returns (bytes memory _accountId)
+    {
+        require(_accAddress != address(0), "Address can't be NULL");
+        require(
+            accounts[_accAddress].owner != _accAddress,
+            "Account already exists"
+        );
+        accounts[_accAddress] = Accout(_accAddress, 0);
+        emit AccountCreated(_accAddress, 0);
         // Abi.encodePacked of the address of the account
-        return keccak256(abi.encodePacked(_owner));
+        return abi.encodePacked(_accAddress);
     }
 
     ///@notice gives power to an address to update Data.
@@ -61,6 +76,7 @@ contract Settler is Ownable, NonblockingLzApp, ReentrancyGuard {
         require(_sDelegate != address(0), "Address can't be NULL");
         require(delegated[_sDelegate] == false, "Address already delegated");
         delegated[_sDelegate] = true;
+        emit Delegated(_sDelegate);
     }
 
     // Modifier to check delegation
@@ -70,9 +86,9 @@ contract Settler is Ownable, NonblockingLzApp, ReentrancyGuard {
     }
 
     /// @notice gets balance from an account
-    /// @param _owner The owner of the account
-    function getBalance(address _owner) public view returns (uint256) {
-        return accounts[_owner].balance;
+    /// @param _accAddress The owner of the account
+    function getBalance(address _accAddress) public view returns (uint256) {
+        return accounts[_accAddress].balance;
     }
 
     /// @notice recives tokens from a stargate
@@ -129,15 +145,21 @@ contract Settler is Ownable, NonblockingLzApp, ReentrancyGuard {
     }
 
     /// @notice Withdraws tokens from an account
-    /// @param _owner The owner of the account
+    /// @param _accAddress The owner of the account
     /// @param _amount The amount of tokens to withdraw
 
-    function withdraw(address _owner, uint256 _amount) public nonReentrant {
-        require(msg.sender == _owner, "Only the owner can withdraw");
-        require(accounts[_owner].balance >= _amount, "Not enough balance");
-        accounts[_owner].balance -= _amount;
+    function withdraw(address _accAddress, uint256 _amount)
+        public
+        nonReentrant
+    {
+        require(msg.sender == _accAddress, "Only the owner can withdraw");
+        require(accounts[_accAddress].balance >= _amount, "Not enough balance");
+        accounts[_accAddress].balance -= _amount;
 
-        emit Withdraw(_owner, _amount);
+        // Transfer USDC to the caller.
+        IERC20(USDC).safeTransfer(_accAddress, _amount);
+
+        emit Withdraw(_accAddress, _amount);
     }
 
     receive() external payable {}
