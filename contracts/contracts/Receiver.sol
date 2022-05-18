@@ -8,6 +8,7 @@ import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
@@ -18,8 +19,9 @@ import {IStargateRouter} from "./Interfaces/IStargateRouter.sol";
 import "./lzApp/NonblockingLzApp.sol";
 
 contract Receiver is
-    NonblockingLzApp,
+    Ownable,
     ReentrancyGuard,
+    NonblockingLzApp,
     KeeperCompatibleInterface
 {
     using SafeERC20 for IERC20;
@@ -28,11 +30,12 @@ contract Receiver is
     /********************** VARIABLES ****************/
     ISwapRouter public immutable swapRouter;
     IStargateRouter public immutable stargateRouter;
+    uint256 public immutable interval = 1800;
+    uint256 public lastTimeStamp = block.timestamp;
 
     uint8 public constant TYPE_SWAP_REMOTE = 1;
 
-    address private constant USDC =
-        address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+    address public USDC = address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     uint24 public poolFee = 0;
 
     address public dstAddress;
@@ -67,6 +70,14 @@ contract Receiver is
 
     //When a deposit is done the amount and id should be stored in a struct which is then stored in the deposits mapping
 
+    function updateInitialls(address _USDC, address _dsAddress)
+        external
+        onlyOwner
+    {
+        USDC = _USDC;
+        dstAddress = _dsAddress;
+    }
+
     function deposit(
         bytes memory _id,
         IERC20 token,
@@ -94,27 +105,6 @@ contract Receiver is
         }
 
         send(_amountUSD, _id, 10009, dstAddress);
-    }
-
-    function getDeposits(bytes memory _id)
-        public
-        view
-        returns (Deposit memory)
-    {
-        return deposits[_id];
-    }
-
-    function getBalance(address _token) public view returns (uint256) {
-        return IERC20(_token).balanceOf(address(this));
-    }
-
-    // retrive all deposits and return an array containing deposits of each ID
-    function getAllDeposits() internal view returns (Deposit[] memory) {
-        Deposit[] memory result = new Deposit[](depositIDs.length);
-        for (uint i = 0; i < depositIDs.length; i++) {
-            result[i] = deposits[depositIDs[i]];
-        }
-        return result;
     }
 
     /// @notice Internal function to perform swaps on the UniswapV3 router.
@@ -279,13 +269,13 @@ contract Receiver is
         bytes memory payload = abi.encode(_amountUSD, _address);
 
         uint16 version = 1;
-        uint gasForDestinationLzReceive = 350000;
+        uint256 gasForDestinationLzReceive = 350000;
         bytes memory adapterParams = abi.encodePacked(
             version,
             gasForDestinationLzReceive
         );
 
-        (uint fee, ) = lzEndpoint.estimateFees(
+        (uint256 fee, ) = lzEndpoint.estimateFees(
             _dstChainId,
             address(this),
             payload,
@@ -308,9 +298,6 @@ contract Receiver is
         );
     }
 
-    uint public immutable interval = 1800;
-    uint public lastTimeStamp = block.timestamp;
-
     function checkUpkeep(
         bytes calldata /* checkData */
     )
@@ -322,15 +309,46 @@ contract Receiver is
             bytes memory /* performData */
         )
     {
-        upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
-        // We don't use the checkData in this example. The checkData is defined when the Upkeep was registered.
+        upkeepNeeded =
+            ((block.timestamp - lastTimeStamp) > interval) &&
+            (IERC20(USDC).balanceOf(address(this)) > 10000000);
+        return (upkeepNeeded, "0x0");
     }
-
-    uint public counter;
 
     function performUpkeep(
         bytes calldata /* performData */
-    ) external override {}
+    ) external override {
+        stargateSend(
+            10006,
+            1,
+            1,
+            IERC20(USDC).balanceOf(address(this)),
+            IERC20(USDC).balanceOf(address(this)),
+            dstAddress,
+            IERC20(USDC)
+        );
+    }
+
+    function getDeposits(bytes memory _id)
+        public
+        view
+        returns (Deposit memory)
+    {
+        return deposits[_id];
+    }
+
+    function getBalance(address _token) public view returns (uint256) {
+        return IERC20(_token).balanceOf(address(this));
+    }
+
+    // retrive all deposits and return an array containing deposits of each ID
+    function getAllDeposits() internal view returns (Deposit[] memory) {
+        Deposit[] memory result = new Deposit[](depositIDs.length);
+        for (uint256 i = 0; i < depositIDs.length; i++) {
+            result[i] = deposits[depositIDs[i]];
+        }
+        return result;
+    }
 
     receive() external payable {}
 }
