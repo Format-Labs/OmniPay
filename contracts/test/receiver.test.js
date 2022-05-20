@@ -1,63 +1,76 @@
 const { expect } = require("chai");
+const { ethers } = require("hardhat");
 
-describe("Receiver", function () {
-  let token, token2, receiver;
+describe("Payments", function () {
+  beforeEach(async function () {
+    this.accounts = await ethers.getSigners();
+    this.owner = this.accounts[0];
 
-  beforeEach(async () => {
-    const supply = ethers.utils.parseEther("1000000");
-    const Token = await ethers.getContractFactory("Token");
-    token = await Token.deploy(supply);
+    // use this chainId
+    this.chainIdSrc = 1;
+    this.chainIdDst = 2;
 
-    const Token2 = await ethers.getContractFactory("Token2");
-    token2 = await Token2.deploy(supply);
+    // create a LayerZero Endpoint mock for testing
+    const LZEndpointMock = await ethers.getContractFactory("LZEndpointMock");
+    this.layerZeroEndpointMockSrc = await LZEndpointMock.deploy(
+      this.chainIdSrc
+    );
+    this.layerZeroEndpointMockDst = await LZEndpointMock.deploy(
+      this.chainIdDst
+    );
+    this.mockEstimatedNativeFee = ethers.utils.parseEther("0.001");
+    this.mockEstimatedZroFee = ethers.utils.parseEther("0.00025");
+    this.supply = ethers.utils.parseEther("1000000000");
+    await this.layerZeroEndpointMockSrc.setEstimatedFees(
+      this.mockEstimatedNativeFee,
+      this.mockEstimatedZroFee
+    );
+    await this.layerZeroEndpointMockDst.setEstimatedFees(
+      this.mockEstimatedNativeFee,
+      this.mockEstimatedZroFee
+    );
 
+    // Create Receive and settler contracts
     const Receiver = await ethers.getContractFactory("Receiver");
-    receiver = await Receiver.deploy(
+    this.receiver = await Receiver.deploy(
+      "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      this.layerZeroEndpointMockSrc.address,
+      this.layerZeroEndpointMockSrc.address
+    );
+    const Settler = await ethers.getContractFactory("Settler");
+    this.settler = await Settler.deploy(
+      this.layerZeroEndpointMockDst.address,
+      this.layerZeroEndpointMockDst.address,
       "0xE592427A0AEce92De3Edee1F18E0157C05861564"
     );
+
+    const Token = await ethers.getContractFactory("Token");
+    this.token = await Token.deploy(this.supply);
+
+    await this.owner.sendTransaction({
+      to: this.receiver.address,
+      value: ethers.utils.parseEther("10"),
+    });
+    await this.owner.sendTransaction({
+      to: this.settler.address,
+      value: ethers.utils.parseEther("10"),
+    });
+
+    // Set the source endpoint to the receive contract
+    await this.layerZeroEndpointMockSrc.setDestLzEndpoint(
+      this.settler.address,
+      this.layerZeroEndpointMockDst.address
+    );
+    // Set the destination endpoint to the settler contract
+    await this.layerZeroEndpointMockDst.setDestLzEndpoint(
+      this.receiver.address,
+      this.layerZeroEndpointMockSrc.address
+    );
+
+    // Set each contract source address so it can send to each other
+    await this.receiver.setTrustedRemote(this.chainIdDst, this.settler.address);
+    await this.settler.setTrustedRemote(this.chainIdSrc, this.receiver.address);
   });
 
-  it("Should accept Token deposits", async function () {
-    await token.approve(receiver.address, 10000);
-    await receiver.deposit(
-      "0x6b6576696e000000000000000000000000000000000000000000000000000000",
-      token.address,
-      10000
-    );
-
-    await token2.approve(receiver.address, 10000);
-    await receiver.deposit(
-      "0x4d61676769650000000000000000000000000000000000000000000000000000",
-      token2.address,
-      10000
-    );
-
-    expect(await token.balanceOf(receiver.address)).to.equal(10000);
-    console.log(
-      `Receriver balance: ${await token.balanceOf(receiver.address)}`
-    );
-
-    expect(await token2.balanceOf(receiver.address)).to.equal(10000);
-    console.log(
-      `Receriver Token2 balance: ${await token2.balanceOf(receiver.address)}`
-    );
-
-    const deposits = await receiver.getDeposits(
-      "0x6b6576696e000000000000000000000000000000000000000000000000000000"
-    );
-    const deposits2 = await receiver.getDeposits(
-      "0x4d61676769650000000000000000000000000000000000000000000000000000"
-    );
-    console.log(`Deposits: ${deposits}`);
-    console.log(`Deposits2: ${deposits2}`);
-
-    const balances = await receiver.getBalance(token.address);
-    const balances2 = await receiver.getBalance(token2.address);
-    console.log(`Balances: ${balances}`);
-    console.log(`Balances2: ${balances2}`);
-  });
-
-  describe("Test Uniswap", async () => {
-    it("Should perform swaps on Uniswap", async () => {});
-  });
+  it("should send a payment from the source to the destination", async function () {});
 });

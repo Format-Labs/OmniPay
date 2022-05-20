@@ -13,3 +13,12 @@ npx hardhat node
 node scripts/sample-script.js
 npx hardhat help
 ```
+
+# Deployments
+
+````
+```Fuji```: 0xa569b422E8bb326a540573b803Ff425B7f6c5AC9
+```Mumbai```: 0x1791197F7126655bA6e1f7112bd98c7042c2190F
+```Rinkeby```: 0xbC3735977F1cb424757340fF6bD003740a2dc115
+
+````

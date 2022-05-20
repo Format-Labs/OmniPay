@@ -51,9 +51,6 @@ contract Receiver is
     mapping(bytes => bool) public inserted;
     bytes[] public depositIDs;
 
-    // a mapping of bytes32 to mapping of address to balances
-    // mapping(bytes32 => mapping(address => uint256)) public balances;
-
     /********************** EVENTS *******************/
 
     event TransferInitiated(address asset, address from, address to);

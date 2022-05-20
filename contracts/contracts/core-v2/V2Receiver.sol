@@ -16,7 +16,7 @@ import {IStargateRouter} from "../Interfaces/IStargateRouter.sol";
 
 import "../lzApp/NonblockingLzApp.sol";
 
-contract Receiver is NonblockingLzApp, ReentrancyGuard {
+contract V2Receiver is NonblockingLzApp, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using Address for address;
 

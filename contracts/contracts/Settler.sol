@@ -64,9 +64,9 @@ contract Settler is
     event Delegated(address indexed _from);
 
     constructor(
+        ISwapRouter _swapRouter,
         address _lzEndpoint,
-        address _USDC,
-        ISwapRouter _swapRouter
+        address _USDC
     ) NonblockingLzApp(_lzEndpoint) {
         USDC = _USDC;
         swapRouter = _swapRouter;
