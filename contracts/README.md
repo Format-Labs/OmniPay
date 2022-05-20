@@ -16,9 +16,24 @@ npx hardhat help
 
 # Deployments
 
-````
-```Fuji```: 0xa569b422E8bb326a540573b803Ff425B7f6c5AC9
-```Mumbai```: 0x1791197F7126655bA6e1f7112bd98c7042c2190F
-```Rinkeby```: 0xbC3735977F1cb424757340fF6bD003740a2dc115
+------------------------ Deploying to Mumbai ------------------------
 
-````
+Deploying contract with account: 0x83dbAD8Bc853924Acb6AD1D0688fff806e934e1F
+Account balance: 9051581327736914173
+Settler deployed to: 0x4547f69beC77e5f00628357A010f67032D759bEd
+------------------------ Deploying to Rinkeby ------------------------
+
+Deploying contract with account: 0x83dbAD8Bc853924Acb6AD1D0688fff806e934e1F
+Account balance: 83848072360490772387
+Receiver deployed to: 0xfEF0F7F495e4503D71213ABA859561E02f3cfCF2
+------------------------ Deploying to Fuji ------------------------
+
+Deploying contract with account: 0x83dbAD8Bc853924Acb6AD1D0688fff806e934e1F
+Account balance: 27677922994672057685
+Receiver deployed to: 0xfEF0F7F495e4503D71213ABA859561E02f3cfCF2
+
+------------------------ Deploying to Rinkeby ------------------------
+
+Deploying contract with account: 0x83dbAD8Bc853924Acb6AD1D0688fff806e934e1F
+Account balance: 79841024736920397925
+Settler deployed to: 0xFb4D0b14BE5A6aaE9502f72a86C9Ab5CB0F45F73

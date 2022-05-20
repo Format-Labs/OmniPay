@@ -47,6 +47,10 @@ module.exports = {
     gasLimit: 1.6 * 10 ** 6,
   },
   etherscan: {
-    apikey: process.env.ETHERSCAN_API_KEY,
+    apiKey: {
+      polygonMumbai: process.env.POLYSCAN_API_KEY,
+      rinkeby: process.env.ETHERSCAN_API_KEY,
+      avalancheFujiTestnet: process.env.FUJISCAN_API_KEY,
+    },
   },
 };

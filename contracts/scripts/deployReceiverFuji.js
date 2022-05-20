@@ -19,7 +19,7 @@ async function main() {
     "0x93f54D755A063cE7bB9e6Ac47Eccc8e33411d706"
   );
 
-  await owner.sendTransaction({
+  await deployer.sendTransaction({
     to: receiver.address,
     value: ethers.utils.parseEther("2"),
   });

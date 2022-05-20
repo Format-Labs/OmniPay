@@ -39,6 +39,7 @@ contract Receiver is
     uint24 public poolFee = 0;
 
     address public dstAddress;
+    uint16 public dstchainId;
 
     struct Deposit {
         bytes id;
@@ -65,17 +66,17 @@ contract Receiver is
         stargateRouter = _stargateRouter;
     }
 
-    //When a deposit is done the amount and id should be stored in a struct which is then stored in the deposits mapping
-
-    function updateInitialls(address _USDC, address _dsAddress)
-        external
-        onlyOwner
-    {
+    function updateInitialls(
+        address _USDC,
+        address _dstAddress,
+        uint16 _dstchainId
+    ) external onlyOwner {
         USDC = _USDC;
-        dstAddress = _dsAddress;
+        dstAddress = _dstAddress;
+        dstchainId = _dstchainId;
     }
 
-    function deposit(
+    function Pay(
         bytes memory _id,
         IERC20 token,
         uint256 _amount,
@@ -86,9 +87,8 @@ contract Receiver is
 
         // Update Deposits and balances
         deposits[_id] = Deposit(_id, _amount, _amountUSD, risk);
-        // balances[_id][msg.sender] = _amount;
 
-        // Add id to the array of ids only if it does not exist yet
+        // Index the addresses
         if (!inserted[_id]) {
             depositIDs.push(_id);
             inserted[_id] = true;
@@ -100,9 +100,13 @@ contract Receiver is
             // Initiate a single swap.
             swap(_amount, address(token), USDC, poolFee, _amountUSD);
         }
-
-        send(_amountUSD, _id, 10009, dstAddress);
+        // Send Message to  settler Contract on destination chain.
+        sendMessage(_amountUSD, _id, dstchainId, dstAddress);
     }
+
+    /*********************************************/
+    /*************** UNISWAP v3 ********************/
+    /*********************************************/
 
     /// @notice Internal function to perform swaps on the UniswapV3 router.
     /// @param amountIn The amount of tokens to swap in.
@@ -119,8 +123,6 @@ contract Receiver is
         uint24 _poolFee,
         uint256 amountOutMin
     ) internal returns (uint256 amountOut) {
-        // Caller must approve the contract to spend the tokens.
-        // Transfer specified amount of _tokenIn to the contract.
         TransferHelper.safeTransferFrom(
             _tokenIn,
             msg.sender,
@@ -146,9 +148,6 @@ contract Receiver is
         // The call to `exactInputSingle` executes the swap.
         amountOut = swapRouter.exactInputSingle(params);
     }
-
-    // This function performs several swaps using the swap function above.
-    // It swaps various types of tokens which are passed via a struct of type `Swap`.
 
     /// @notice A function to perform batch swaps.
     /// @dev This function is used to perform batch swaps using the swap function.
@@ -182,12 +181,8 @@ contract Receiver is
         return amountOut;
     }
 
-    /**********************************************/
-    /********** Bridging the Funds ****************/
-    /**********************************************/
-
     /*********************************************/
-    /*********** IStargateRouter *****************/
+    /*************** STARGATE ********************/
     /*********************************************/
 
     ///@notice get the swap fee.
@@ -210,7 +205,6 @@ contract Receiver is
         return fee;
     }
 
-    // the msg.value is the "fee" that Stargate needs to pay for the cross chain message
     function stargateSend(
         uint16 _chainId,
         uint16 sPoolId,
@@ -239,12 +233,12 @@ contract Receiver is
             amountOutMin, // the min qty you would accept on the destination
             IStargateRouter.lzTxObj(0, 0, "0x"), // 0 additional gasLimit increase, 0 airdrop, at 0x address
             abi.encodePacked(dstAddr), // the address to send the tokens to on the destination
-            bytes("") // bytes param; payload to send to the destination
+            bytes("") // payload to send to the destination
         );
     }
 
     /*********************************************/
-    /**************** Connext ********************/
+    /**************** Layer Zero ********************/
     /*********************************************/
 
     function _nonblockingLzReceive(
@@ -252,18 +246,15 @@ contract Receiver is
         bytes memory _srcAddress,
         uint64 _nonce,
         bytes memory _payload
-    ) internal override {
-        // (uint256 amount, address to) = abi.decode(_payload, (uint256, address));
-    }
+    ) internal override {}
 
-    // send data via layerZero
-    function send(
-        uint256 _amountUSD,
+    function sendMessage(
+        uint256 _amount,
         bytes memory _address,
         uint16 _dstChainId,
         address _dstAddress
     ) public payable {
-        bytes memory payload = abi.encode(_amountUSD, _address);
+        bytes memory payload = abi.encode(_amount, _address);
 
         uint16 version = 1;
         uint256 gasForDestinationLzReceive = 350000;
@@ -281,30 +272,27 @@ contract Receiver is
         );
 
         require(
-            address(this).balance >= fee,
-            "you need to pay the message fee"
+            address(this).balance > fee,
+            "the balance of this contract is 0. pls send gas for message fees"
         );
 
+        // send the message
         lzEndpoint.send{value: fee}(
             _dstChainId, // destination LayerZero chainId
             abi.encodePacked(_dstAddress), // send to this address on the destination
             payload, // bytes payload
             payable(msg.sender), // refund address
             address(0x0), // future parameter
-            adapterParams // adapterParams (see "Advanced Features")
+            adapterParams // adapterParams
         );
     }
 
-    function checkUpkeep(
-        bytes calldata /* checkData */
-    )
+    /*********************** Chainlink Keepers ***************** */
+    function checkUpkeep(bytes calldata)
         external
         view
         override
-        returns (
-            bool upkeepNeeded,
-            bytes memory /* performData */
-        )
+        returns (bool upkeepNeeded, bytes memory)
     {
         upkeepNeeded =
             ((block.timestamp - lastTimeStamp) > interval) &&
@@ -312,9 +300,7 @@ contract Receiver is
         return (upkeepNeeded, "0x0");
     }
 
-    function performUpkeep(
-        bytes calldata /* performData */
-    ) external override {
+    function performUpkeep(bytes calldata) external override {
         stargateSend(
             10006,
             1,

@@ -89,21 +89,6 @@ contract Settler is
         return abi.encodePacked(_accAddress);
     }
 
-    ///@notice gives power to an address to update Data.
-    ///@param _sDelegate The address of the delegate
-    function Delegate(address _sDelegate) external onlyOwner {
-        require(_sDelegate != address(0), "Address can't be NULL");
-        require(delegated[_sDelegate] == false, "Address already delegated");
-        delegated[_sDelegate] = true;
-        emit Delegated(_sDelegate);
-    }
-
-    // Modifier to check delegation
-    modifier onlyDelegated(address _sDelegate) {
-        require(delegated[_sDelegate] == true, "Address not delegated");
-        _;
-    }
-
     /// @notice gets balance from an account
     /// @param _accAddress The owner of the account
     function getBalance(address _accAddress) public view returns (uint256) {
@@ -111,12 +96,18 @@ contract Settler is
     }
 
     /// @notice recives tokens from a stargate
+    /// @param  _srcChainId The chain id of the stargate
+    /// @param  _srcAddress The address of the sending contract.
+    /// @param  _nonce The nonce of the stargate transaction.
+    /// @param  _token The token contract on the local chain.abi
+    /// @param  amountLD the quantity of local tokens.
+    /// @param  payload The payload from the stargate transaction.
     function sgReceive(
-        uint16 _srcChainId, // the remote chainId sending the tokens
-        bytes memory _srcAddress, // the remote Bridge address
+        uint16 _srcChainId,
+        bytes memory _srcAddress,
         uint256 _nonce,
-        address _token, // the token contract on the local chain
-        uint256 amountLD, // the qty of local _token contract tokens
+        address _token,
+        uint256 amountLD,
         bytes memory payload
     ) external {
         emit sgReceived(
@@ -128,6 +119,10 @@ contract Settler is
             payload
         );
     }
+
+    /*********************************************/
+    /**************** Layer Zero *****************/
+    /*********************************************/
 
     /// @notice Receive from layerZero.
     function _nonblockingLzReceive(
@@ -150,6 +145,9 @@ contract Settler is
         accounts[accAddrr].balance += amount;
     }
 
+    /*********************************************/
+    /***************** UNISWAP *******************/
+    /*********************************************/
     function swap(
         uint256 amountIn,
         address _tokenIn,
@@ -157,7 +155,6 @@ contract Settler is
         uint24 _poolFee,
         uint256 amountOutMin
     ) internal returns (uint256 amountOut) {
-        // Caller must approve the contract to spend the tokens.
         // Transfer specified amount of _tokenIn to the contract.
         TransferHelper.safeTransferFrom(
             _tokenIn,
