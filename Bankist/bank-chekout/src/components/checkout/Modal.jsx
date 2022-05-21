@@ -21,7 +21,7 @@ function Modal() {
             <div className="flex justify-between ">
               <h1 className="m-4 font-sans font-bold tracking-wide text-white-100 ">
                 <span className="font-thin">Powerd by </span>
-                OmniPay
+                OmniFi
               </h1>
               <button className="flex justify-end p-1 font-bold text-white border border-none rounded-md outline-none cursor-pointer bg-">
                 <AiOutlineClose size="2em" />
