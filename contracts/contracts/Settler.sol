@@ -9,7 +9,6 @@ import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";

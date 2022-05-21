@@ -7,7 +7,7 @@ import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -214,17 +214,18 @@ contract Receiver is
         address dstAddr,
         IERC20 token
     ) public payable {
+        uint256 fee = _getStargateSwapFee(
+            _chainId,
+            abi.encodePacked(address(this)),
+            abi.encodePacked(address(this))
+        );
         require(
-            msg.value >=
-                _getStargateSwapFee(
-                    _chainId,
-                    abi.encodePacked(address(this)),
-                    abi.encodePacked(address(this))
-                )
+            address(this).balance > fee,
+            "the balance of this contract is Low. pls send gas for message fees"
         );
 
         IERC20(token).approve(address(stargateRouter), _amount);
-        IStargateRouter(stargateRouter).swap{value: msg.value}(
+        IStargateRouter(stargateRouter).swap{value: fee}(
             _chainId, //  LayerZero chainId
             sPoolId, // source pool id
             dPoolId, // dest pool id
@@ -273,7 +274,7 @@ contract Receiver is
 
         require(
             address(this).balance > fee,
-            "the balance of this contract is 0. pls send gas for message fees"
+            "the balance of this contract is Low. pls send gas for message fees"
         );
 
         // send the message
@@ -302,7 +303,7 @@ contract Receiver is
 
     function performUpkeep(bytes calldata) external override {
         stargateSend(
-            10006,
+            dstchainId,
             1,
             1,
             IERC20(USDC).balanceOf(address(this)),
