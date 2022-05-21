@@ -2,6 +2,7 @@ import React from "react";
 
 import { AiOutlineClose } from "react-icons/ai";
 import Form from "../Socket/Form";
+import Payments from "./Payments";
 
 function Modal() {
   return (
@@ -27,7 +28,7 @@ function Modal() {
                 <AiOutlineClose size="2em" />
               </button>
             </div>
-            <Form />
+            <Payments />
           </div>
         </div>
       </div>
