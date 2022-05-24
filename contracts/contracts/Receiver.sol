@@ -30,27 +30,30 @@ contract Receiver is
     /********************** VARIABLES ****************/
     ISwapRouter public immutable swapRouter;
     IStargateRouter public immutable stargateRouter;
-    uint256 public immutable interval = 1800;
-    uint256 public lastTimeStamp = block.timestamp;
 
+    /********************** Stargate swap Func Type****************/
     uint8 public constant TYPE_SWAP_REMOTE = 1;
 
-    address public USDC = address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+    /********************** Keeper params ****************/
+    uint256 public immutable interval = 30 minutes;
+    uint256 public lastTimeStamp = block.timestamp;
+
     uint24 public poolFee = 0;
 
+    address public USDC;
     address public dstAddress;
     uint16 public dstchainId;
 
-    struct Deposit {
+    struct Payment {
         bytes id;
         uint256 amount;
         uint256 amountUSD;
         bool risk;
     }
 
-    mapping(bytes => Deposit) public deposits;
+    mapping(bytes => Payment) public payments;
     mapping(bytes => bool) public inserted;
-    bytes[] public depositIDs;
+    bytes[] public paymentIDs;
 
     /********************** EVENTS *******************/
 
@@ -85,12 +88,12 @@ contract Receiver is
     ) public {
         token.safeTransferFrom(msg.sender, address(this), _amount);
 
-        // Update Deposits and balances
-        deposits[_id] = Deposit(_id, _amount, _amountUSD, risk);
+        // Update payments and balances
+        payments[_id] = Payment(_id, _amount, _amountUSD, risk);
 
         // Index the addresses
         if (!inserted[_id]) {
-            depositIDs.push(_id);
+            paymentIDs.push(_id);
             inserted[_id] = true;
         }
 
@@ -163,7 +166,7 @@ contract Receiver is
     }
 
     function batchSwap(Swap[] memory _swaps)
-        public
+        external
         returns (uint256 amountOut)
     {
         amountOut = 0;
@@ -213,7 +216,7 @@ contract Receiver is
         uint256 amountOutMin,
         address dstAddr,
         IERC20 token
-    ) public payable {
+    ) internal {
         uint256 fee = _getStargateSwapFee(
             _chainId,
             abi.encodePacked(address(this)),
@@ -297,39 +300,44 @@ contract Receiver is
     {
         upkeepNeeded =
             ((block.timestamp - lastTimeStamp) > interval) &&
-            (IERC20(USDC).balanceOf(address(this)) > 10000000);
+            (IERC20(USDC).balanceOf(address(this)) > 100000);
         return (upkeepNeeded, "0x0");
     }
 
+    // Bridge the funds via the Chainlink Keeper
     function performUpkeep(bytes calldata) external override {
-        stargateSend(
-            dstchainId,
-            1,
-            1,
-            IERC20(USDC).balanceOf(address(this)),
-            IERC20(USDC).balanceOf(address(this)),
-            dstAddress,
-            IERC20(USDC)
-        );
+        if ((block.timestamp - lastTimeStamp) > interval) {
+            lastTimeStamp = block.timestamp;
+            stargateSend(
+                dstchainId,
+                1,
+                1,
+                /**send a penny Due to lack of liquidity on testnets. */
+                1000,
+                1000,
+                dstAddress,
+                IERC20(USDC)
+            );
+        }
     }
 
-    function getDeposits(bytes memory _id)
+    function getPayments(bytes memory _id)
         public
         view
-        returns (Deposit memory)
+        returns (Payment memory)
     {
-        return deposits[_id];
+        return payments[_id];
     }
 
     function getBalance(address _token) public view returns (uint256) {
         return IERC20(_token).balanceOf(address(this));
     }
 
-    // retrive all deposits and return an array containing deposits of each ID
-    function getAllDeposits() internal view returns (Deposit[] memory) {
-        Deposit[] memory result = new Deposit[](depositIDs.length);
-        for (uint256 i = 0; i < depositIDs.length; i++) {
-            result[i] = deposits[depositIDs[i]];
+    // retrive all payments and return an array containing payments of each ID
+    function getAllpayments() public view returns (Payment[] memory) {
+        Payment[] memory result = new Payment[](paymentIDs.length);
+        for (uint256 i = 0; i < paymentIDs.length; i++) {
+            result[i] = payments[paymentIDs[i]];
         }
         return result;
     }
