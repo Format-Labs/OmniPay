@@ -1,69 +1,83 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ~0.8.0;
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "@openzeppelin/contracts/utils/Address.sol";
 
-import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
-
 import {IStargateRouter} from "./Interfaces/IStargateRouter.sol";
-import {IConnext} from "./Interfaces/IConnext.sol";
 
-// import "./lzApp/LzApp.sol";
+import "./lzApp/NonblockingLzApp.sol";
 
-contract Receiver {
+contract Receiver is
+    Ownable,
+    ReentrancyGuard,
+    NonblockingLzApp,
+    KeeperCompatibleInterface
+{
     using SafeERC20 for IERC20;
     using Address for address;
 
     /********************** VARIABLES ****************/
     ISwapRouter public immutable swapRouter;
     IStargateRouter public immutable stargateRouter;
-    IConnext public immutable connext;
+    uint256 public immutable interval = 1800;
+    uint256 public lastTimeStamp = block.timestamp;
 
     uint8 public constant TYPE_SWAP_REMOTE = 1;
 
-    address private constant USDC =
-        address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+    address public USDC = address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     uint24 public poolFee = 0;
 
+    address public dstAddress;
+    uint16 public dstchainId;
+
     struct Deposit {
-        bytes32 id;
+        bytes id;
         uint256 amount;
         uint256 amountUSD;
         bool risk;
     }
 
-    mapping(bytes32 => Deposit) public deposits;
-    mapping(bytes32 => bool) public inserted;
-    bytes32[] public depositIDs;
-
-    // a mapping of bytes32 to mapping of address to balances
-    // mapping(bytes32 => mapping(address => uint256)) public balances;
+    mapping(bytes => Deposit) public deposits;
+    mapping(bytes => bool) public inserted;
+    bytes[] public depositIDs;
 
     /********************** EVENTS *******************/
 
     event TransferInitiated(address asset, address from, address to);
-    event Deposited(bytes32 indexed id, uint256 amount);
+    event Deposited(bytes indexed id, uint256 amount);
 
     constructor(
         ISwapRouter _swapRouter,
         IStargateRouter _stargateRouter,
-        IConnext _connext
-    ) {
+        address _LzEndpoint
+    ) NonblockingLzApp(_LzEndpoint) {
         swapRouter = _swapRouter;
         stargateRouter = _stargateRouter;
-        connext = _connext;
     }
 
-    //When a deposit is done the amount and id should be stored in a struct which is then stored in the deposits mapping
+    function updateInitialls(
+        address _USDC,
+        address _dstAddress,
+        uint16 _dstchainId
+    ) external onlyOwner {
+        USDC = _USDC;
+        dstAddress = _dstAddress;
+        dstchainId = _dstchainId;
+    }
 
-    function deposit(
-        bytes32 _id,
+    function Pay(
+        bytes memory _id,
         IERC20 token,
         uint256 _amount,
         uint256 _amountUSD,
@@ -73,9 +87,8 @@ contract Receiver {
 
         // Update Deposits and balances
         deposits[_id] = Deposit(_id, _amount, _amountUSD, risk);
-        // balances[_id][msg.sender] = _amount;
 
-        // Add id to the array of ids only if it does not exist yet
+        // Index the addresses
         if (!inserted[_id]) {
             depositIDs.push(_id);
             inserted[_id] = true;
@@ -87,24 +100,13 @@ contract Receiver {
             // Initiate a single swap.
             swap(_amount, address(token), USDC, poolFee, _amountUSD);
         }
+        // Send Message to  settler Contract on destination chain.
+        sendMessage(_amountUSD, _id, dstchainId, dstAddress);
     }
 
-    function getDeposits(bytes32 _id) public view returns (Deposit memory) {
-        return deposits[_id];
-    }
-
-    function getBalance(address _token) public view returns (uint256) {
-        return IERC20(_token).balanceOf(address(this));
-    }
-
-    // retrive all deposits and return an array containing deposits of each ID
-    function getAllDeposits() internal view returns (Deposit[] memory) {
-        Deposit[] memory result = new Deposit[](depositIDs.length);
-        for (uint i = 0; i < depositIDs.length; i++) {
-            result[i] = deposits[depositIDs[i]];
-        }
-        return result;
-    }
+    /*********************************************/
+    /*************** UNISWAP v3 ********************/
+    /*********************************************/
 
     /// @notice Internal function to perform swaps on the UniswapV3 router.
     /// @param amountIn The amount of tokens to swap in.
@@ -121,8 +123,6 @@ contract Receiver {
         uint24 _poolFee,
         uint256 amountOutMin
     ) internal returns (uint256 amountOut) {
-        // Caller must approve the contract to spend the tokens.
-        // Transfer specified amount of _tokenIn to the contract.
         TransferHelper.safeTransferFrom(
             _tokenIn,
             msg.sender,
@@ -148,9 +148,6 @@ contract Receiver {
         // The call to `exactInputSingle` executes the swap.
         amountOut = swapRouter.exactInputSingle(params);
     }
-
-    // This function performs several swaps using the swap function above.
-    // It swaps various types of tokens which are passed via a struct of type `Swap`.
 
     /// @notice A function to perform batch swaps.
     /// @dev This function is used to perform batch swaps using the swap function.
@@ -184,12 +181,8 @@ contract Receiver {
         return amountOut;
     }
 
-    /**********************************************/
-    /********** Bridging the Funds ****************/
-    /**********************************************/
-
     /*********************************************/
-    /*********** IStargateRouter *****************/
+    /*************** STARGATE ********************/
     /*********************************************/
 
     ///@notice get the swap fee.
@@ -212,7 +205,6 @@ contract Receiver {
         return fee;
     }
 
-    // the msg.value is the "fee" that Stargate needs to pay for the cross chain message
     function stargateSend(
         uint16 _chainId,
         uint16 sPoolId,
@@ -222,17 +214,18 @@ contract Receiver {
         address dstAddr,
         IERC20 token
     ) public payable {
+        uint256 fee = _getStargateSwapFee(
+            _chainId,
+            abi.encodePacked(address(this)),
+            abi.encodePacked(address(this))
+        );
         require(
-            msg.value >=
-                _getStargateSwapFee(
-                    _chainId,
-                    abi.encodePacked(address(this)),
-                    abi.encodePacked(address(this))
-                )
+            address(this).balance > fee,
+            "the balance of this contract is Low. pls send gas for message fees"
         );
 
-        IERC20(token).approve(address(swapRouter), _amount);
-        IStargateRouter(stargateRouter).swap{value: msg.value}(
+        IERC20(token).approve(address(stargateRouter), _amount);
+        IStargateRouter(stargateRouter).swap{value: fee}(
             _chainId, //  LayerZero chainId
             sPoolId, // source pool id
             dPoolId, // dest pool id
@@ -241,50 +234,104 @@ contract Receiver {
             amountOutMin, // the min qty you would accept on the destination
             IStargateRouter.lzTxObj(0, 0, "0x"), // 0 additional gasLimit increase, 0 airdrop, at 0x address
             abi.encodePacked(dstAddr), // the address to send the tokens to on the destination
-            bytes("") // bytes param; payload to send to the destination
+            bytes("") // payload to send to the destination
         );
     }
 
     /*********************************************/
-    /**************** Connext ********************/
+    /**************** Layer Zero ********************/
     /*********************************************/
 
-    function connextSend(
-        address to,
-        address asset,
-        uint32 originDomain,
-        uint32 destinationDomain,
-        uint256 amount
-    ) external payable {
-        ERC20 token = ERC20(asset);
-        token.transferFrom(msg.sender, address(this), amount);
-        token.approve(address(connext), amount);
+    function _nonblockingLzReceive(
+        uint16 _srcChainId,
+        bytes memory _srcAddress,
+        uint64 _nonce,
+        bytes memory _payload
+    ) internal override {}
 
-        bytes4 selector = bytes4(keccak256("deposit(address,uint256,address)"));
+    function sendMessage(
+        uint256 _amount,
+        bytes memory _address,
+        uint16 _dstChainId,
+        address _dstAddress
+    ) public payable {
+        bytes memory payload = abi.encode(_amount, _address);
 
-        bytes memory callData = abi.encodeWithSelector(
-            selector,
-            asset,
-            amount,
-            msg.sender
+        uint16 version = 1;
+        uint256 gasForDestinationLzReceive = 350000;
+        bytes memory adapterParams = abi.encodePacked(
+            version,
+            gasForDestinationLzReceive
         );
 
-        IConnext.CallParams memory callParams = IConnext.CallParams({
-            to: to,
-            callData: callData,
-            originDomain: originDomain,
-            destinationDomain: destinationDomain
-        });
+        (uint256 fee, ) = lzEndpoint.estimateFees(
+            _dstChainId,
+            address(this),
+            payload,
+            false,
+            adapterParams
+        );
 
-        IConnext.XCallArgs memory xcallArgs = IConnext.XCallArgs({
-            params: callParams,
-            transactingAssetId: asset,
-            amount: amount
-        });
+        require(
+            address(this).balance > fee,
+            "the balance of this contract is Low. pls send gas for message fees"
+        );
 
-        connext.xcall(xcallArgs);
+        // send the message
+        lzEndpoint.send{value: fee}(
+            _dstChainId, // destination LayerZero chainId
+            abi.encodePacked(_dstAddress), // send to this address on the destination
+            payload, // bytes payload
+            payable(msg.sender), // refund address
+            address(0x0), // future parameter
+            adapterParams // adapterParams
+        );
+    }
 
-        emit TransferInitiated(asset, msg.sender, to);
+    /*********************** Chainlink Keepers ***************** */
+    function checkUpkeep(bytes calldata)
+        external
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory)
+    {
+        upkeepNeeded =
+            ((block.timestamp - lastTimeStamp) > interval) &&
+            (IERC20(USDC).balanceOf(address(this)) > 10000000);
+        return (upkeepNeeded, "0x0");
+    }
+
+    function performUpkeep(bytes calldata) external override {
+        stargateSend(
+            dstchainId,
+            1,
+            1,
+            IERC20(USDC).balanceOf(address(this)),
+            IERC20(USDC).balanceOf(address(this)),
+            dstAddress,
+            IERC20(USDC)
+        );
+    }
+
+    function getDeposits(bytes memory _id)
+        public
+        view
+        returns (Deposit memory)
+    {
+        return deposits[_id];
+    }
+
+    function getBalance(address _token) public view returns (uint256) {
+        return IERC20(_token).balanceOf(address(this));
+    }
+
+    // retrive all deposits and return an array containing deposits of each ID
+    function getAllDeposits() internal view returns (Deposit[] memory) {
+        Deposit[] memory result = new Deposit[](depositIDs.length);
+        for (uint256 i = 0; i < depositIDs.length; i++) {
+            result[i] = deposits[depositIDs[i]];
+        }
+        return result;
     }
 
     receive() external payable {}

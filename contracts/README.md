@@ -1,15 +1,9 @@
-# Basic Sample Hardhat Project
+# Deployments
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts.
+## ------------------------ Deploying to Fuji ------------------------
 
-Try running some of the following tasks:
+Receiver deployed to: `0xfA05D3DaD3ffAB0Ae73F6A122CBFAa7f88e2574C`
 
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-node scripts/sample-script.js
-npx hardhat help
-```
+## ------------------------ Deploying to Rinkeby ------------------------
+
+Settler deployed to: `0x1204eEC14363B4D78211aDb845BCA5692f243dcf`
