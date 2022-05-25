@@ -1,6 +1,7 @@
 import React from "react";
 
 import { AiOutlineClose } from "react-icons/ai";
+
 import Payments from "./Payments";
 
 function Modal() {

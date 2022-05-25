@@ -2,7 +2,7 @@
 
 ## ------------------------ Deploying to Fuji ------------------------
 
-Receiver deployed to: `0xfA05D3DaD3ffAB0Ae73F6A122CBFAa7f88e2574C`
+Receiver deployed to: `0xDAc24DcF66F570279d6a0B96cBdD593f918ef772`
 
 ## ------------------------ Deploying to Rinkeby ------------------------
 
