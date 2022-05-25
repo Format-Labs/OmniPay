@@ -208,25 +208,6 @@
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "name": "depositIDs",
-    "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }],
-    "name": "deposits",
-    "outputs": [
-      { "internalType": "bytes", "name": "id", "type": "bytes" },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" },
-      { "internalType": "uint256", "name": "amountUSD", "type": "uint256" },
-      { "internalType": "bool", "name": "risk", "type": "bool" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "dstAddress",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
@@ -262,6 +243,25 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getAllpayments",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "bytes", "name": "id", "type": "bytes" },
+          { "internalType": "uint256", "name": "amount", "type": "uint256" },
+          { "internalType": "uint256", "name": "amountUSD", "type": "uint256" },
+          { "internalType": "bool", "name": "risk", "type": "bool" }
+        ],
+        "internalType": "struct Receiver.Payment[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       { "internalType": "address", "name": "_token", "type": "address" }
     ],
@@ -284,7 +284,7 @@
   },
   {
     "inputs": [{ "internalType": "bytes", "name": "_id", "type": "bytes" }],
-    "name": "getDeposits",
+    "name": "getPayments",
     "outputs": [
       {
         "components": [
@@ -293,7 +293,7 @@
           { "internalType": "uint256", "name": "amountUSD", "type": "uint256" },
           { "internalType": "bool", "name": "risk", "type": "bool" }
         ],
-        "internalType": "struct Receiver.Deposit",
+        "internalType": "struct Receiver.Payment",
         "name": "",
         "type": "tuple"
       }
@@ -373,6 +373,25 @@
     "inputs": [],
     "name": "owner",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "paymentIDs",
+    "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }],
+    "name": "payments",
+    "outputs": [
+      { "internalType": "bytes", "name": "id", "type": "bytes" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" },
+      { "internalType": "uint256", "name": "amountUSD", "type": "uint256" },
+      { "internalType": "bool", "name": "risk", "type": "bool" }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
@@ -472,21 +491,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "uint16", "name": "_chainId", "type": "uint16" },
-      { "internalType": "uint16", "name": "sPoolId", "type": "uint16" },
-      { "internalType": "uint16", "name": "dPoolId", "type": "uint16" },
-      { "internalType": "uint256", "name": "_amount", "type": "uint256" },
-      { "internalType": "uint256", "name": "amountOutMin", "type": "uint256" },
-      { "internalType": "address", "name": "dstAddr", "type": "address" },
-      { "internalType": "contract IERC20", "name": "token", "type": "address" }
-    ],
-    "name": "stargateSend",
-    "outputs": [],
-    "stateMutability": "payable",
     "type": "function"
   },
   {
