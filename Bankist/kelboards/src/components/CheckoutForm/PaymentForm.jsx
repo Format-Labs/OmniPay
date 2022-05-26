@@ -1,9 +1,10 @@
 import React from "react";
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext } from "react";
 import Modal from "./Modal";
 import { Typography, Button, Divider } from "@material-ui/core";
 import { TransactionContext } from "../../context/Gcontext";
-
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
 import Review from "./Review";
 
 const PaymentForm = ({
@@ -14,7 +15,8 @@ const PaymentForm = ({
   onCaptureCheckout,
 }) => {
   const [openModal, setOpenModal] = useState(false);
-  const { confirmed } = useContext(TransactionContext);
+  const { confirmed, setIsConfirmed, isLoading } =
+    useContext(TransactionContext);
 
   const handleSubmit = async () => {
     if (!confirmed) return;
@@ -66,7 +68,10 @@ const PaymentForm = ({
         }}
       >
         <Button
-          onClick={() => setOpenModal(true)}
+          onClick={() => {
+            setOpenModal(true);
+            setIsConfirmed(false);
+          }}
           variant="contained"
           style={{
             fontSize: "16px",
@@ -81,11 +86,24 @@ const PaymentForm = ({
             borderColor: "transparent",
           }}
         >
-          Pay With Cryptocurrency
+          Pay With Crypto
         </Button>
       </div>
-      {openModal && <Modal amount={checkoutToken.live.subtotal.raw} />}
+      {openModal && !confirmed && (
+        <Modal amount={checkoutToken.live.subtotal.raw} />
+      )}
       {/* Submit button */}
+      {isLoading && (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      )}
 
       {confirmed && (
         <div

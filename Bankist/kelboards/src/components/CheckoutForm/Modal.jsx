@@ -12,7 +12,6 @@ function Modal({ amount }) {
           display: "flex",
           flexDirection: "column",
           color: "#fff",
-          backgroundColor: "#ffffff",
           borderRadius: "10px",
         }}
       >
@@ -29,7 +28,7 @@ function Modal({ amount }) {
           >
             <span
               className="font-thin"
-              style={{ fontSize: "0.5rem", fontWeight: "normal" }}
+              style={{ fontSize: "0.8rem", fontWeight: "bold" }}
             >
               Powered by{" "}
             </span>

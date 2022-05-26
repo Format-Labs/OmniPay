@@ -21,6 +21,7 @@
     "react-dom": "^16.13.1",
     "react-hook-form": "^6.11.5",
     "react-icons": "^4.3.1",
+    "react-modal": "^3.15.1",
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.3",
