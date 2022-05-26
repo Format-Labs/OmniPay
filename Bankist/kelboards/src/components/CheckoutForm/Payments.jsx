@@ -22,6 +22,7 @@ const Payments = ({ amount }) => {
     handleApprove,
     getAmount,
     approved,
+    handleNetworkSwitch,
   } = useContext(TransactionContext);
 
   useEffect(() => {
@@ -202,7 +203,10 @@ const Payments = ({ amount }) => {
           } else {
             return (
               <button
-                onClick={() => connectWallet()}
+                onClick={() => {
+                  connectWallet();
+                  handleNetworkSwitch();
+                }}
                 className="p-2 m-2 text-3xl text-white bg-blue-600 border-2 rounded-2xl"
                 style={{
                   fontSize: "20px",

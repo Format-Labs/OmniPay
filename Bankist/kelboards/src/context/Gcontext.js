@@ -16,6 +16,61 @@ if (typeof window !== "undefined") {
   eth = window.ethereum;
 }
 
+const networks = {
+  fuji: {
+    chainId: `0x${Number(43113).toString(16)}`,
+    chainName: "Avalanche Fuji Testnet",
+    nativeCurrency: {
+      name: "Avalanche",
+      symbol: "AVAX",
+      decimals: 18,
+    },
+    rpcUrls: ["https://api.avax-test.network/ext/bc/C/rpc"],
+    blockExplorerUrls: ["https://testnet.snowtrace.io/"],
+  },
+  bsc: {
+    chainId: `0x${Number(56).toString(16)}`,
+    chainName: "Binance Smart Chain Mainnet",
+    nativeCurrency: {
+      name: "Binance Chain Native Token",
+      symbol: "BNB",
+      decimals: 18,
+    },
+    rpcUrls: [
+      "https://bsc-dataseed1.binance.org",
+      "https://bsc-dataseed2.binance.org",
+      "https://bsc-dataseed3.binance.org",
+      "https://bsc-dataseed4.binance.org",
+      "https://bsc-dataseed1.defibit.io",
+      "https://bsc-dataseed2.defibit.io",
+      "https://bsc-dataseed3.defibit.io",
+      "https://bsc-dataseed4.defibit.io",
+      "https://bsc-dataseed1.ninicoin.io",
+      "https://bsc-dataseed2.ninicoin.io",
+      "https://bsc-dataseed3.ninicoin.io",
+      "https://bsc-dataseed4.ninicoin.io",
+      "wss://bsc-ws-node.nariox.org",
+    ],
+    blockExplorerUrls: ["https://bscscan.com"],
+  },
+};
+
+const changeNetwork = async () => {
+  try {
+    if (!window.ethereum) throw new Error("No crypto wallet found");
+    await window.ethereum.request({
+      method: "wallet_addEthereumChain",
+      params: [
+        {
+          ...networks["fuji"],
+        },
+      ],
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 const getEthereumContract = () => {
   const provider = new ethers.providers.Web3Provider(ethereum);
   const signer = provider.getSigner();
@@ -83,6 +138,10 @@ export const TransactionProvider = ({ children }) => {
     });
   };
 
+  const handleNetworkSwitch = async () => {
+    await changeNetwork();
+  };
+
   const handlePay = async (metamask = eth) => {
     const { addressTo, token, amount, amountUSD, risk } = formData;
     const parsedAmount = ethers.utils.parseUnits(amount.toString(), 6);
@@ -147,6 +206,8 @@ export const TransactionProvider = ({ children }) => {
         getAmount,
         approved,
         confirmed,
+        setIsConfirmed,
+        handleNetworkSwitch,
       }}
     >
       {children}
