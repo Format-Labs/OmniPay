@@ -21,7 +21,7 @@ With these you get the features offered by payment processors such as Visa where
 ## How OmniPe does this.
 
 Omnipe uses LayerZero as its messaging protocol to coordinate messages accross diffrent chains when a payment is done. It also uses Stargate as it liquidity protocol and Uniswap as it's exchage to perform swaps. Omnipe uses Chainlink Keepers for automation and gas savings by performing bridging of funds every 30 minutes.
-[![OmniPe Logo](https://imgur.com/a/Lgh4jdN)]
+![OmniPe Logo](https://imgur.com/a/Lgh4jdN)
 
 | Layer             |         stake Holders          |
 | ----------------- | :----------------------------: |
