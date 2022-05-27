@@ -1,6 +1,10 @@
 # OmniPe
 
-[![OmniPe Logo](https://www.canva.com/design/DAFB5oFBnVo/FCeR3f93IHTh6DbZHXDdtQ/view?utm_content=DAFB5oFBnVo&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)](https://youtu.be/jxtqWJucd6k)
+<h1 align="center">
+
+[![OmniPe Logo](./images/omniPe.png)](https://youtu.be/jxtqWJucd6k)
+
+</h1>
 
 ## Inspiration
 
@@ -15,13 +19,12 @@ All traditional payments processors use several moving parts such as TCP/IP and 
 
 ## What OmniPe does.
 
-Omnipe is a cross-chain payments aggragetor protocol that facilitates payments accross different chains easily without having to deploy various chains. Merchants and receiving end users can receive payments with any type of Token as long as it has enough liquidity in the receiving chain. The Merchant can also choose what type of Token they'd like to settle in the destination chain.
+Omnipe is a cross-chain payments aggragetor protocol that facilitates payments accross different chains easily without having to deploy various chains in a non-custodial manner. Merchants and receiving end users can receive payments with any type of Token as long as it has enough liquidity in the receiving chain. The Merchant can also choose what type of Token they'd like to settle in the destination chain.
 With these you get the features offered by payment processors such as Visa where you can spend your Dollars in Europe without having to go through Exchanges to get Euros.
 
 ## How OmniPe does this.
 
 Omnipe uses LayerZero as its messaging protocol to coordinate messages accross diffrent chains when a payment is done. It also uses Stargate as it liquidity protocol and Uniswap as it's exchage to perform swaps. Omnipe uses Chainlink Keepers for automation and gas savings by performing bridging of funds every 30 minutes.
-![OmniPe Logo](https://imgur.com/a/Lgh4jdN)
 
 | Layer             |         stake Holders          |
 | ----------------- | :----------------------------: |
@@ -32,105 +35,97 @@ Omnipe uses LayerZero as its messaging protocol to coordinate messages accross d
 | Automation        |       Chainlink Keepers        |
 | Exchange          |      Uniswap, Match, etc.      |
 
-A merchant has to create an account on the Destination chain `Settler.sol` and enter the setlement token they'd like to settle in.
+![OmniPe Logo](images/txanat.png)
 
-## What it does
+A merchant has to create an account on the Destination chain `Settler.sol` and enter the setlement token they'd like to settle in. They can then use their address as `userId` to receive payments on the source chains.
 
-Music streaming is a digital-first technology, which has numerous verifiable data sources, therefore NUSIC bonds are focused on future streaming income, rather than music publishing in its entirety. Any rights owner with a Spotify for Artists account can mint an NFT bond, and by providing a collateral deposit for a single quarter the smart contract is able to offer a face value over the term of the bond, computing a rating based on artist popularity and quarterly collateral deposits.
+### Quick Demo
 
-The artist can fractionalize the bond, so they can offer it up as a collection on their NFT marketplace of choice. By making regular collateral deposits, a NUSIC bond issuer is able to maintain the rating, indicating the risk profile of the asset to the NFT holder. The rating engine is inspired by the work of rating agencies such as Fitch, Moody's and Standard & Poors, but designed for DeFi, meaning that the top ratings or investment grades are only possible through overcollateralization:
+[OmniPe](https://omnipe.vercel.app/) Interface that allows merchants to create accounts on the Destination chain and receive payments on various Source chains.
+[ KelBoards](https://kelboards.vercel.app/) A Keyboard marketplace that uses OmniPe as its payment processor.
 
-## What's next for NUSIC: NFT Music Bonds
+## What's next for OmniPe: Cross-chain payments
 
-There are three important components which will enable NUSIC to become established as powerful DeFi infrastructure for NFT music bonds. The music streaming oracle network itself, the yield maximizer that multiplies returns, and the NUSIC DAO, which has the potential to ground the protocol in the real world and invite contribution from the music industry.
+For the next few months we will be working on a cross-chain payments protocol that will facilitate payments accross different chains Which include adding support for non-smart contracts chains such as Bitcoin, Zcash, Dogecoin, etc via Thorchain and Cataloge Finance we will be adding support for Solana and other non-EVM chains which will be the first to support truelly non-custodial cross-chain payments.
 
-### Music Oracle Network
+A new wallet interaction will be our top priority for the next few months.
 
-To maintain reliable music streaming data for processing in the NFT bonds, we propose the following music oracle network, which would see [Chartmetric](https://www.chartmetric.com), [Soundcharts](https://www.soundcharts.com) and [Songstats](https://www.songstats.com) becoming Data Providers in the Chainlink network, delivering aggregated music streaming number feeds from the top music streaming services and social networks:
+We will be adding suport for new DeFi primitives such as Buy now Pay Never (BNPN) using yeild farming.
 
-![Music Oracle Network](https://scontent-mia3-1.xx.fbcdn.net/v/t39.30808-6/260657102_2712631615699661_3010365413079885934_n.png?_nc_cat=108&ccb=1-5&_nc_sid=e3f864&_nc_ohc=sH479qKVTVAAX_SrHao&_nc_oc=AQnVrl6bLmMaIJyCn_BGcoAkuOA2NiDvK6LXsHwbt1u6h2OWgrVFzTnptl8HcNfqxI8&_nc_ht=scontent-mia3-1.xx&oh=f2243b3d30181a4c20862d65102442ac&oe=61A7C316)
+We aim to form strategic patnerships with payment providers such as stripe to be their technology providers.
 
-Bringing these data providers into the Chainlink network will also enable the existing on-chain music projects to innovate with new use-cases, while artists and tastemakers can complement their web 3.0 presence with their existing web 2.0 data.
-
-### Yield Maximizer
-
-In order to maximize the bond coupon rate for NFT holders while minimizing the further collateral deposits and interest payments from the bond issuers, a portion of the advance can be allocated to the Yield Maximizer. We are looking to leverage Sushi's [Bentobox](https://docs.sushi.com/products/bentobox) vault and/or other strategies/protocols so as to provide maximum yield for market participants.
-
-![Yield Maximizer](https://scontent-mia3-1.xx.fbcdn.net/v/t39.30808-6/261124395_2712638855698937_7479942245748074067_n.png?_nc_cat=100&ccb=1-5&_nc_sid=0debeb&_nc_ohc=iH9NmpwY7TsAX8woVfU&_nc_ht=scontent-mia3-1.xx&oh=85a9f367ff3c4b027535682bb5ac60fe&oe=61A748F5)
-
-### NUSIC DAO
-
-The NUSIC DAO will enable real-world music streaming invoices and/or music catalogs to be provided as collateral, in order to give more security to the bond holders. NUSIC governance will advance the refinement of the bond rating engine, and enable DAO participants to access further music investment opportunities through the strength of the network.
-
-# [Join Us!](https://nusic.fm/join-dao)
-
+<h1 align="center">
+Build & Deployment
+</h1>
 ## Deployed Addresses on Rinkeby
 
-RatingEngine deployed to: 0x960319ef5663148bd03AbEeaf0EaB00A9C89bc1b <br>
-ChainlinkSpotifyListeners deployed to: 0x05cA3e08c871D6CE41AaffdEB59d71088dFD76F0 <br>
-ChainlinkYoutubeSubscribers deployed to: 0xc24b4940D52B97F6D2754F51CE40b38e64E81d9B <br>
-ChainlinkMetadataRequest deployed to: 0x681Ffe5CCfA0576017e82ab87efBDe130C5930AF <br>
-BondNFTGenerator deployed to: 0x9e51efE23277Ed2547c16F502463105db318bdaF <br>
-BondNFTManager deployed to: 0x69D6B89B4Ec7F07b81E877772b87e2AD248396Be <br>
+**Settler.sol :**
+Mumbai
+`0x4547f69beC77e5f00628357A010f67032D759bEd`
+Rinkeby
+`0x8321afEa88377D34D84C45362f701094B88be11a`
+
+**Receiver.sol :**
+Avalanche
+`0xDAc24DcF66F570279d6a0B96cBdD593f918ef772`
 
 #### Deploy All Contracts
 
-```shell
-npx hardhat run scripts/01_deploy.ts --network rinkeby
+Add Private key to .env file
+
+```bash
+cd contracts
+./deploy.sh
 ```
 
-#### Fund Chainlink Contracts
+#### Verify contracts
 
-Replace Contract Addresses in script then run following command
+Replace addresses in `./contracts/verify.sh`
 
-```shell
-npx hardhat run scripts/02_fund-contracts.ts --network rinkeby
+```bash
+cd contracts
+./verify.sh
 ```
 
-#### Create Asset Pool
+#### Mint testnet compatible USDC
 
-```shell
-npx hardhat create-asset-pool --contract < BondNFTManager Address > --network rinkeby
-```
+[Rinkeby](https://rinkeby.etherscan.io/address/0x1717A0D5C8705EE89A8aD6E808268D6A826C97A4#code)
+[Avalanche](https://testnet.snowtrace.io/address/0x4A0D1092E9df255cf95D72834Ea9255132782318#code)
 
-#### Read Asset Pool Details
+## Folder structure
 
-```shell
-npx hardhat read-asset-pool --contract < BondNFTManager Address > --asset-pool-creator-address < Asset pool creator Address > --network rinkeby
-```
-
-#### Issue NFT Bond
-
-```shell
-npx hardhat issue-nft-bond --contract < BondNFTManager Address > --asset-pool-address < Address of Asset Pool received from previous command > --network rinkeby
-```
-
-#### Verify Bond Creation
-
-```shell
-npx hardhat verify-nft-creation --nft-manager-contract-address < BondNFTManager Address >  --nft-creator-address < Bond NFT creator Address > --network rinkeby
-```
-
-#### Verify Bond Details which will be updated from Chainlink Oracle
-
-```shell
-npx hardhat verify-nft-bond --bond-contract-address < Bond NFT Address received in previous address > --network rinkeby
-```
-
-#### Mint Tokens for Particular NFT Bond
-
-```shell
-npx hardhat mint-nft --nft-manager-address < BondNFTManager Address > --nft-bond-address <Bond NFT Token Address> --network rinkeby
-```
-
-#### Read Bond NFT Details
-
-```shell
-npx hardhat read-token-details --nft-bond-address <Bond NFT Token Address> --network rinkeby
-```
-
-#### Set Base URI for NFT Bond Metadata
-
-```shell
-npx hardhat set-token-uri --nft-bond-address <Bond NFT Token Address> --uri < UIR Here > --network rinkeby
+```markdown
+.
+├── Backend
+│   ├── services
+│   └── tsconfig.json
+├── Bankist
+│   ├── bank-chekout
+│   └── kelboards
+├── Front-end
+│   ├── omnipe-app
+│   └── omnipe-landing-page
+├── README.md
+├── contracts
+│   ├── FujiDeployArgs.js
+│   ├── MumbaiDeployArgs.js
+│   ├── README.md
+│   ├── RinkebyDeployArgs.js
+│   ├── artifacts
+│   ├── cache
+│   ├── constants
+│   ├── contracts
+│   ├── deploy-args.js
+│   ├── deploy.sh
+│   ├── hardhat.config.js
+│   ├── node_modules
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── scripts
+│   ├── test
+│   ├── verify.sh
+│   └── yarn.lock
+└── images
+├── omniPe.png
+└── txanat.png
 ```
