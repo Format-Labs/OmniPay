@@ -19,8 +19,13 @@ const style = {
   buttonAccent: `bg-[#172A42] border border-[#163256] hover:border-[#234169] h-full rounded-2xl flex items-center justify-center text-[#4F90EA]`,
 };
 const Header = () => {
-  const { currentAccount, connectWallet, home, setHome, handleRoutes } =
-    useContext(TransactionContext);
+  const {
+    currentAccount,
+    connectWallet,
+    home,
+    handleRoutes,
+    handleNetworkSwitch,
+  } = useContext(TransactionContext);
   const [userName, setUserName] = useState();
 
   useEffect(() => {
@@ -79,7 +84,10 @@ const Header = () => {
           </div>
         ) : (
           <div
-            onClick={() => connectWallet()}
+            onClick={() => {
+              handleNetworkSwitch();
+              connectWallet();
+            }}
             className={`${style.button} ${style.buttonPadding}`}
           >
             <div className={`${style.buttonAccent} ${style.buttonPadding}`}>
