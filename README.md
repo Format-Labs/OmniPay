@@ -44,6 +44,11 @@ A merchant has to create an account on the Destination chain `Settler.sol` and e
 [OmniPe](https://omnipe.vercel.app/) Interface that allows merchants to create accounts on the Destination chain and receive payments on various Source chains.
 [ KelBoards](https://kelboards.vercel.app/) A Keyboard marketplace that uses OmniPe as its payment processor.
 
+## Challenges
+
+The major hurdle in building cross-chain applications is that there are no frameworks or libraries that can be used to facilitate testing and development. You also sometimes need to cater in for latency in different chains.
+The other challenge is lack of interoperability between different testnet chains.
+
 ## What's next for OmniPe: Cross-chain payments
 
 For the next few months we will be working on a cross-chain payments protocol that will facilitate payments accross different chains Which include adding support for non-smart contracts chains such as Bitcoin, Zcash, Dogecoin, etc via Thorchain and Cataloge Finance we will be adding support for Solana and other non-EVM chains which will be the first to support truelly non-custodial cross-chain payments.
@@ -57,16 +62,17 @@ We aim to form strategic patnerships with payment providers such as stripe to be
 <h1 align="center">
 Build & Deployment
 </h1>
-## Deployed Addresses on Rinkeby
+
+## Deployed Addresses
 
 **Settler.sol :**
-Mumbai
+_Mumbai_
 `0x4547f69beC77e5f00628357A010f67032D759bEd`
-Rinkeby
+_Rinkeby_
 `0x8321afEa88377D34D84C45362f701094B88be11a`
 
 **Receiver.sol :**
-Avalanche
+_Avalanche_
 `0xDAc24DcF66F570279d6a0B96cBdD593f918ef772`
 
 #### Deploy All Contracts
@@ -93,6 +99,12 @@ cd contracts
 [Avalanche](https://testnet.snowtrace.io/address/0x4A0D1092E9df255cf95D72834Ea9255132782318#code)
 
 ## Folder structure
+
+The `Bankist` folder holds and example of end-user applications that can be built on OmniPe
+`bank-checkout` - A react Component that can be used to create a checkout for a merchant.
+`KeldBoards` - An Ecommerce market place that Uses OmniPe as its payment processor.
+`Front-end`
+`OmniPe` - A cross-chain payments aggragetor protocol interface that facilitates payments accross different chains.
 
 ```markdown
 .
