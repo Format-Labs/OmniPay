@@ -26,11 +26,13 @@ const getEthereumContract = () => {
 export const TransactionProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentAccount, setCurrentAccount] = useState(null);
+  const [home, setHome] = useState(true);
 
   const [formData, setFormData] = useState({
     address: "",
     settlementToken: "",
   });
+  // console.log(home);
 
   const connectWallet = async (mematask = eth) => {
     try {
@@ -74,6 +76,10 @@ export const TransactionProvider = ({ children }) => {
 
     handleCreateAccount();
   };
+
+  const handleRoutes = (state) => {
+    setHome(state);
+  };
   return (
     <TransactionContext.Provider
       value={{
@@ -84,6 +90,9 @@ export const TransactionProvider = ({ children }) => {
         handleSubmit,
         isLoading,
         handleCreateAccount,
+        home,
+        setHome,
+        handleRoutes,
       }}
     >
       {children}

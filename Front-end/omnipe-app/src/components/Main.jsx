@@ -1,8 +1,6 @@
 import { useContext } from "react";
 // import Image from "next/image";
 import { RiSettings3Fill } from "react-icons/ri";
-import { AiOutlineDown } from "react-icons/ai";
-// import ethLogo from "../assets/eth.png";
 import { TransactionContext } from "../context/GContext";
 
 const style = {

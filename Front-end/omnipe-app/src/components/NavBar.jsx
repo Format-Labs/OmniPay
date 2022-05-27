@@ -1,14 +1,11 @@
 import { useState, useEffect, useContext } from "react";
-// import Image from "next/image";
-import { FiArrowUpRight } from "react-icons/fi";
 import { AiOutlineDown } from "react-icons/ai";
 import { HiOutlineDotsVertical } from "react-icons/hi";
-// import ethLogo from "../assets/eth.png";
-// import UniswapLogo from "../assets/uniswap.png";
 import { TransactionContext } from "../context/GContext";
+import { Link } from "react-router-dom";
 
 const style = {
-  wrapper: `p-4 w-screen flex justify-between items-center`,
+  wrapper: `p-4 w-screen flex justify-between items-center h-16`,
   headerLogo: `flex w-1/4 items-center justify-start`,
   nav: `flex-1 flex justify-center items-center`,
   navItemsContainer: `flex bg-[#191B1F] rounded-3xl`,
@@ -22,8 +19,8 @@ const style = {
   buttonAccent: `bg-[#172A42] border border-[#163256] hover:border-[#234169] h-full rounded-2xl flex items-center justify-center text-[#4F90EA]`,
 };
 const Header = () => {
-  const [selectedNav, setSelectedNav] = useState("swap");
-  const { currentAccount, connectWallet } = useContext(TransactionContext);
+  const { currentAccount, connectWallet, home, setHome, handleRoutes } =
+    useContext(TransactionContext);
   const [userName, setUserName] = useState();
 
   useEffect(() => {
@@ -31,20 +28,47 @@ const Header = () => {
       `${currentAccount?.slice(0, 7)}...${currentAccount?.slice(35)}`
     );
   }, [currentAccount]);
-  // console.log(currentAccount, connectWallet)
   return (
     <div className={style.wrapper}>
       <div className={style.headerLogo}>
-        {/* <Image src="" alt="uniswap" height={40} width={40} /> */}
         <h1 className="text-xl font-bold m-4"> OmniPe</h1>
+      </div>
+      <div className={`${style.button} ${style.buttonPadding}`}>
+        <div className={style.buttonIconContainer}></div>
+
+        {(() => {
+          if (home) {
+            return (
+              <Link
+                to="/details"
+                onClick={() => {
+                  handleRoutes(false);
+                }}
+              >
+                Account Details
+              </Link>
+            );
+          } else {
+            return (
+              <Link
+                to="/"
+                onClick={() => {
+                  handleRoutes(true);
+                }}
+              >
+                Create Account
+              </Link>
+            );
+          }
+        })()}
+
+        <div className={style.buttonIconContainer}></div>
       </div>
       <div className={style.nav}></div>
       <div className={style.buttonsContainer}>
         <div className={`${style.button} ${style.buttonPadding}`}>
-          <div className={style.buttonIconContainer}>
-            {/* <Image src={ethLogo} alt="eth logo" height={20} width={20} /> */}
-          </div>
-          <p>Ethereum</p>
+          <div className={style.buttonIconContainer}></div>
+          <p>Rinkeby</p>
           <div className={style.buttonIconContainer}>
             <AiOutlineDown />
           </div>
