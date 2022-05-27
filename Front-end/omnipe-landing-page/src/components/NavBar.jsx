@@ -2,7 +2,7 @@ import React from "react";
 
 const NavBar = () => {
   return (
-    <nav className="fixed top-0 flex items-center justify-between w-full p-6 bg-gradient-to-bl from-gray-900 to-blue-900">
+    <nav className="fixed top-0 flex items-center justify-between w-full p-6 bg-gradient-to-r from-cyan-700 to-blue-800 bg-opacity-60 backdrop-filter backdrop-blur-lg">
       <div className="flex items-center flex-shrink-0 mr-6 text-white">
         <span className="text-xl font-semibold tracking-tight">Omnipe</span>
       </div>

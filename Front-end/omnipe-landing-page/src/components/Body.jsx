@@ -2,11 +2,12 @@ import React from "react";
 
 const Body = () => {
   return (
-    <div className="h-screen bg-gradient-to-bl from-gray-900 to-blue-900">
+    <div className="h-screen bg-gradient-to-bl from-cyan-700 to-blue-800">
       <div className="flex flex-col items-center justify-center h-full p-20 ">
         <h1 className="m-1 text-5xl font-bold text-center text-white ">
           Powering the next generation of commerce and global payments
         </h1>
+
         <div className="text-xl text-center text-white">
           <p>Accept payments from all chains without any Hustle</p>
           <p className="font-mono font-bold text-center text-green-500">
@@ -14,7 +15,7 @@ const Body = () => {
           </p>
         </div>
       </div>
-      <div className="h-screen bg-gradient-to-tl from-gray-800 to-blue-900">
+      <div className="h-screen bg-gradient-to-tl from-blue-700 to-cyan-800">
         <div className="flex flex-col items-center justify-center h-full p-20 ">
           <h1 className="m-1 text-5xl font-bold text-center text-white ">
             What is OmniPe?
