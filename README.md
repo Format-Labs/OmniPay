@@ -39,6 +39,9 @@ Omnipe uses LayerZero as its messaging protocol to coordinate messages accross d
 
 A merchant has to create an account on the Destination chain `Settler.sol` and enter the setlement token they'd like to settle in. They can then use their address as `userId` to receive payments on the source chains.
 
+## Achievement
+Integration with Commerce.js via Manual Payments. [here](https://kelboards.vercel.app/)
+
 ### Quick Demo
 
 [OmniPe](https://omnipe.vercel.app/) Interface that allows merchants to create accounts on the Destination chain and receive payments on various Source chains.
