@@ -2,29 +2,29 @@
 
 <h1 align="center">
 
-[![OmniPe Logo](./images/omniPe.png)](https://youtu.be/jxtqWJucd6k)
+[![OmniPe Logo](images/omniPe.png)](https://youtu.be/7h3aCil_o_M)
 
 </h1>
 
 ## Inspiration
 
-Payments is the most fundamental thing to every day life, almost every transaction with value is payments. Over the years there has been evolution in these payments systems to remove the friction when doing payments. With companies such as Visa and Mastercard taking charge best payment processors in the world they all face one problem they are non-censorship resistant yet they are a major backbone of payments but...
+Payments are the most fundamental thing in everyday life, almost every transaction with value is a payment. Over the years there has been an evolution in these payment systems to remove the friction when doing payments. With companies such as Visa and Mastercard taking charge best payment processors in the world they all face one problem they are non-censorship resistant yet they are a major backbone of payments but...
 
-**Enter** Bitcoin - When Satoshi set out to build the Bitcoin protocol he envisioned a future where payments occur on the Bitcoin network ... But we all know that never hapenned instead it became the digital Gold.
+**Enter** Bitcoin - When Satoshi set out to build the Bitcoin protocol he envisioned a future where payments occur on the Bitcoin network ... But we all know that never happened instead it became the digital Gold.
 
 **State of Crypto Payments today**
-Most of crypto payments are fragmented each serving a particular chain or only accepting a particular chain. i.e SolanaPay for Solana, NearPay for Near and planthera of applications enabling payments across other chains.
-None of these payments applications have achieved what has be done in traditional payments processors such as Visa and Mastercard.
-All traditional payments processors use several moving parts such as TCP/IP and UDP as networking protocols, they also use currency exchanges to facilitate different forms of settlements. Until the past few years Crypto had no interoperability protocols that offer these messaging accross diffrerent chains.
+Most of the crypto payments are fragmented each serving a particular chain or only accepting a particular chain. i.e SolanaPay for Solana, NearPay for Near, and a plethora of applications enabling payments across other chains.
+None of these payment applications have achieved what has been done in traditional payments processors such as Visa and Mastercard.
+All traditional payments processors use several moving parts such as TCP/IP and UDP as networking protocols, they also use currency exchanges to facilitate different forms of settlements. Until the past few years, Crypto had no interoperability protocols that offer this messaging across different chains.
 
 ## What OmniPe does.
 
-Omnipe is a cross-chain payments aggragetor protocol that facilitates payments accross different chains easily without having to deploy various chains in a non-custodial manner. Merchants and receiving end users can receive payments with any type of Token as long as it has enough liquidity in the receiving chain. The Merchant can also choose what type of Token they'd like to settle in the destination chain.
-With these you get the features offered by payment processors such as Visa where you can spend your Dollars in Europe without having to go through Exchanges to get Euros.
+Omnipe is a cross-chain payments aggregator protocol that facilitates payments across different chains easily without having to deploy various chains in a non-custodial manner. Merchants and receiving end users can receive payments with any type of Token as long as it has enough liquidity in the receiving chain. The Merchant can also choose what type of Token they'd like to settle in the destination chain.
+With these, you get the features offered by payment processors such as Visa where you can spend your Dollars in Europe without having to go through Exchanges to get Euros.
 
 ## How OmniPe does this.
 
-Omnipe uses LayerZero as its messaging protocol to coordinate messages accross diffrent chains when a payment is done. It also uses Stargate as it liquidity protocol and Uniswap as it's exchage to perform swaps. Omnipe uses Chainlink Keepers for automation and gas savings by performing bridging of funds every 30 minutes.
+Omnipe uses LayerZero as its messaging protocol to coordinate messages across different chains when a payment is done. It also uses Stargate as its liquidity protocol and Uniswap as its exchange to perform swaps. Omnipe uses Chainlink Keepers for automation and gas savings by performing bridging of funds every 30 minutes.
 
 | Layer             |         stake Holders          |
 | ----------------- | :----------------------------: |
@@ -35,32 +35,33 @@ Omnipe uses LayerZero as its messaging protocol to coordinate messages accross d
 | Automation        |       Chainlink Keepers        |
 | Exchange          |      Uniswap, Match, etc.      |
 
-![OmniPe Logo](images/txanat.png)
+![Tx anatomy](images/txanat.png)
 
-A merchant has to create an account on the Destination chain `Settler.sol` and enter the setlement token they'd like to settle in. They can then use their address as `userId` to receive payments on the source chains.
+A merchant has to create an account on the Destination chain `Settler. sol` and enter the settlement token they'd like to settle in. They can then use their address as `userId` to receive payments on the source chains.
 
 ## Achievement
-Integration with Commerce.js via Manual Payments. [here](https://kelboards.vercel.app/)
+
+Integration with Commerce.js via Manual Payments. [here](https://kelboards.vercel.app/)<br/>
 
 ### Quick Demo
 
-[OmniPe](https://omnipe.vercel.app/) Interface that allows merchants to create accounts on the Destination chain and receive payments on various Source chains.
+[OmniPe](https://omnipe.vercel.app/) Interface that allows merchants to create accounts on the Destination chain and receive payments on various Source chains.<br/>
 [ KelBoards](https://kelboards.vercel.app/) A Keyboard marketplace that uses OmniPe as its payment processor.
 
 ## Challenges
 
 The major hurdle in building cross-chain applications is that there are no frameworks or libraries that can be used to facilitate testing and development. You also sometimes need to cater in for latency in different chains.
-The other challenge is lack of interoperability between different testnet chains.
+The other challenge is the lack of interoperability between different testnet chains.
 
 ## What's next for OmniPe: Cross-chain payments
 
-For the next few months we will be working on a cross-chain payments protocol that will facilitate payments accross different chains Which include adding support for non-smart contracts chains such as Bitcoin, Zcash, Dogecoin, etc via Thorchain and Cataloge Finance we will be adding support for Solana and other non-EVM chains which will be the first to support truelly non-custodial cross-chain payments.
+For the next few months, we will be working on a cross-chain payments protocol that will facilitate payments accross different chains Which includes adding support for non-smart contracts chains such as Bitcoin, Zcash, Dogecoin, etc via Thorchain and Catalog Finance we will be adding support for Solana and other non-EVM chains which will be the first to support truly non-custodial cross-chain payments.
 
 A new wallet interaction will be our top priority for the next few months.
 
-We will be adding suport for new DeFi primitives such as Buy now Pay Never (BNPN) using yeild farming.
+We will be adding support for new DeFi primitives such as Buy now Pay Never (BNPN) using yield farming.
 
-We aim to form strategic patnerships with payment providers such as stripe to be their technology providers.
+We aim to form strategic partnerships with payment providers such as stripe to be their technology providers.
 
 <h1 align="center">
 Build & Deployment
